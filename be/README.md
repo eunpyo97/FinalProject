@@ -20,6 +20,27 @@ set FLASK_APP=app
 flask run
 ```
 
+## redis 다운로드 필요
+1. 최신 .msi 설치 파일 다운로드
+```
+https://github.com/microsoftarchive/redis/releases
+```
+2. 기본 설정으로 설치 진행
+3. 설치 후, Redis 실행
+```
+redis-server
+```
+4. 다른 터미널에서 Redis CLI 실행
+```
+redis-cli
+```
+5. 연결 확인 : ping 명령어 실행해서 PONG이 뜨는지 확인
+```
+ping
+```
+6. redis-server.exe로도 실행 가능(mysql 워크벤치처럼 켜놓키만 하면 됩니다.)
+
+
 ## .env 내용
 ```
 # SQLAlchemy (MySQL DB)
