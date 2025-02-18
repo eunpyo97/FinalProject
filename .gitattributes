@@ -1,0 +1,37 @@
+# ipynb는 python으로 인식
+*.ipynb linguist-language=Python
+
+# SQL 인식
+*.sql linguist-detectable=true
+*.sql linguist-language=sql
+
+# SQL의 diff 최적화
+*.sql diff=sql
+
+# 로그 파일은 diff 표시하지 않음
+*.log -diff
+
+# 데이터 파일의 diff 방지
+*.csv -diff
+*.json -diff
+*.xml -diff
+*.yaml -diff
+*.yml -diff
+*.toml -diff
+*.tsv -diff
+*.parquet -diff
+*.sqlite -diff
+*.db -diff
+
+# 바이너리 파일은 diff를 무시 (변경 사항 비교 안 함)
+*.png binary
+*.jpg binary
+*.gif binary
+*.mp4 binary
+
+# 자동 개행 변환 (LF 유지)
+* text=auto
+*.sh text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.bat text eol=crlf
