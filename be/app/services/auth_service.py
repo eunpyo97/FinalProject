@@ -101,7 +101,7 @@ def send_verification_email(user):
     :param user: 사용자 객체
     :return: 이메일 전송 성공 여부
     """
-    token = generate_token(user.user_id, expiration=60)  # 60분 유효
+    token = generate_token(user.user_id, expiration_minutes=60)  # 60분 유효
     verification_url = f"{BASE_URL}/auth/verify-email/{token}"
 
     msg = Message("이메일 인증", sender=MAIL_USERNAME, recipients=[user.email])

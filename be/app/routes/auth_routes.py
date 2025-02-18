@@ -33,7 +33,7 @@ def register():
     """
     try:
         data = request.get_json()
-        response = register_user(data["email"], data["password"])
+        response = register_user(data["email"], data["password"], data["confirm_password"])
         return jsonify(response), 201
 
     except ValueError as e:
