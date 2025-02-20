@@ -16,11 +16,16 @@
 │   └── 📄 total_kor_counsel_bot_clean.csv  # 원본 상담 데이터
 ├── 📂 test
 ├── 📂 models
-│   └──📂 llm
-│       ├── 📄 01_jsonl_to_csv.ipynb  # JSONL 데이터를 CSV로 변환
-│       ├── 📄 02_save_vector_db.ipynb  # 벡터DB로 변환하여 저장
-│       ├── 📄 03_load_vector_db.ipynb  # 저장된 벡터DB 로드
-│       └── 📄 04_rag_chatbot.ipynb  # RAG 챗봇 구현 코드
+│   ├──📂 llm
+│   │   ├── 📄 01_jsonl_to_csv.ipynb  # JSONL 데이터를 CSV로 변환
+│   │   ├── 📄 02_save_vector_db.ipynb  # 벡터DB로 변환하여 저장
+│   │   ├── 📄 03_load_vector_db.ipynb  # 저장된 벡터DB 로드
+│   │   └── 📄 04_rag_chatbot.ipynb  # RAG 챗봇 구현 코드
+    └──📂 face
+│       ├── 📄 preprocess.py  # 데이터를 전처리
+│       ├── 📄 TEST_1efficientnet_b2_model.keras  # 감정분류 모델
+│       ├── 📄 train_model.py  # 감정분류 모델을 훈련시켰던 코드
+│       └── 📄 test_model.py  # 훈련이 완료된 모델을 테스트하고 MongoDB에 전달하는 코드
 ├── 📄 .env  
 ├── 📄 .gitattributes  # Git 속성 설정
 ├── 📄 .gitignore  
