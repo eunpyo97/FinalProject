@@ -32,6 +32,7 @@ filelock==3.17.0
 flasgger==0.9.7.1
 Flask==3.1.0
 Flask-Cors==5.0.0
+Flask-JWT-Extended==4.7.1
 Flask-Mail==0.10.0
 Flask-Migrate==4.0.7
 Flask-PyMongo==3.0.1
@@ -117,6 +118,7 @@ pyasn1_modules==0.4.1
 pydantic==2.10.6
 pydantic_core==2.27.2
 Pygments==2.18.0
+PyJWT==2.10.1
 pymongo==4.10.1
 PyMySQL==1.1.1
 pyparsing==3.2.1

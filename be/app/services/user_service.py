@@ -5,7 +5,6 @@ from jose import jwt, ExpiredSignatureError, JWTError
 import os
 from dotenv import load_dotenv
 
-# 환경 변수에서 SECRET_KEY 가져오기
 load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -26,13 +25,13 @@ def validate_password(password):
     """
     if len(password) < 8:
         raise ValueError("비밀번호는 최소 8자 이상이어야 합니다.")
-    if not re.search(r"[A-Z]", password):  # 대문자
+    if not re.search(r"[A-Z]", password):  
         raise ValueError("비밀번호에 최소 하나의 대문자가 포함되어야 합니다.")
-    if not re.search(r"[a-z]", password):  # 소문자
+    if not re.search(r"[a-z]", password):  
         raise ValueError("비밀번호에 최소 하나의 소문자가 포함되어야 합니다.")
-    if not re.search(r"[0-9]", password):  # 숫자
+    if not re.search(r"[0-9]", password):  
         raise ValueError("비밀번호에 최소 하나의 숫자가 포함되어야 합니다.")
-    if not re.search(r"[@$!%*?&]", password):  # 특수문자
+    if not re.search(r"[@$!%*?&]", password):  
         raise ValueError("비밀번호에 최소 하나의 특수문자가 포함되어야 합니다.")
 
 
@@ -50,12 +49,13 @@ def change_password(user_id, old_password, new_password):
     if not user:
         raise ValueError("해당 사용자를 찾을 수 없습니다.")
 
-    if not user.check_password(old_password):  # 기존 비밀번호 검증
+    if not user.check_password(old_password): 
         raise ValueError("기존 비밀번호가 올바르지 않습니다.")
 
     validate_password(new_password)  # 새 비밀번호 복잡성 체크
 
-    user.password = new_password  # set_password를 사용하여 비밀번호 설정
+    user.set_password(new_password)  
+
     db.session.commit()
 
     return {"message": "비밀번호 변경이 완료되었습니다."}
@@ -82,12 +82,12 @@ def delete_account(user_id, access_token):
     except JWTError:
         raise ValueError("유효하지 않은 액세스 토큰입니다.")
 
+    if token_user_id != user_id:  
+        raise PermissionError("본인 계정만 삭제할 수 있습니다.")
+
     user = User.query.filter_by(user_id=token_user_id).first()
     if not user:
         raise ValueError("해당 사용자를 찾을 수 없습니다.")
-
-    if user.user_id != user_id:
-        raise PermissionError("본인 계정만 삭제할 수 있습니다.")
 
     user.deleted_at = datetime.now(timezone.utc)
     user.status = "deleted"
