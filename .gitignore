@@ -51,6 +51,3 @@ instance/
 # Docker 관련
 docker-compose.override.yml
 .dockerignore
-
-# 개인
-# models/llm/*

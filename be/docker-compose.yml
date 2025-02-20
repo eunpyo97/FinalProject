@@ -1,0 +1,26 @@
+networks:
+  backend_network:
+    driver: bridge
+
+services:
+  redis:
+    # image: redis:latest
+    image: redis:7.4.2  # 25.2.20 다운받은 최신 버전으로 고정
+    container_name: redis_server
+    hostname: redis
+    restart: always 
+    ports:
+      - "6379:6379"  # 호스트 포트와 컨테이너 포트 매핑
+    volumes:
+      - redis_data:/data  # Redis 데이터를 컨테이너 외부에 저장
+    command: redis-server --appendonly yes  # 영구 저장 옵션
+    environment:
+      - REDIS_TIMEOUT=${REDIS_TIMEOUT}
+      - REDIS_MAXMEMORY=${REDIS_MAXMEMORY}
+      - REDIS_MAXMEMORY_POLICY=${REDIS_MAXMEMORY_POLICY}
+    networks:
+      - backend_network
+
+volumes:
+  redis_data:
+    driver: local

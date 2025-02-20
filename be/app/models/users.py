@@ -1,5 +1,5 @@
 from app.database import db
-from bcrypt import hashpw, gensalt, checkpw
+import bcrypt
 from datetime import datetime, timezone
 import uuid
 
@@ -25,11 +25,29 @@ class User(db.Model):
     @password.setter
     def password(self, password):
         """비밀번호 해시 생성 및 저장"""
-        self.password_hash = hashpw(password.encode('utf-8'), gensalt()).decode('utf-8')
+        if not isinstance(password, bytes):  # 문자열이면 바이트로 변환
+            password = password.encode("utf-8")
+        hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())  
+        self.password_hash = hashed_password.decode("utf-8")  # 문자열로 변환하여 저장
+
 
     def check_password(self, password):
         """비밀번호 검증"""
-        return checkpw(password.encode('utf-8'), self.password_hash.encode('utf-8'))
+        stored_hash = self.password_hash
+
+        # 저장된 해시가 문자열(str)이면 바이트(bytes)로 변환
+        if isinstance(stored_hash, str):
+            stored_hash = stored_hash.encode("utf-8")
+
+        # 입력된 비밀번호를 bcrypt 해싱 규칙에 맞춰 바이트로 변환 후 비교
+        is_match = bcrypt.checkpw(password.encode("utf-8"), stored_hash)
+
+        print(f"[DEBUG] 입력된 비밀번호: {password}")
+        print(f"[DEBUG] 저장된 해시 값: {self.password_hash}")
+        print(f"[DEBUG] bcrypt.checkpw 결과: {is_match}")
+
+        return is_match
+
 
     def soft_delete(self):
         """삭제"""
@@ -62,7 +80,7 @@ class UserProfile(db.Model):
     def __repr__(self):
         return f'<UserProfile {self.nickname}>'
 
-
+# 이 프로젝트에선 필요 없어 보임 -> redis 저장...
 class UserToken(db.Model):
     """사용자 토큰 관리 테이블"""
     __tablename__ = 'user_tokens'  
