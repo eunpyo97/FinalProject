@@ -1,7 +1,6 @@
 from flask import Blueprint, request, current_app, jsonify
 from app.services.user_service import change_password, delete_account
 
-# 블루프린트 설정
 user_bp = Blueprint("user", __name__)
 
 
@@ -20,6 +19,9 @@ def change_password_route(user_id):
     :return: JSON 응답 (비밀번호 변경 성공 메시지)
     """
     try:
+        if not user_id:
+            raise ValueError("유효한 사용자 ID가 필요합니다.")  
+
         data = request.get_json()
         if not data or "old_password" not in data or "new_password" not in data:
             raise ValueError("필수 요청 데이터가 누락되었습니다.")
@@ -29,11 +31,11 @@ def change_password_route(user_id):
 
     except ValueError as e:
         current_app.logger.error(f"Password change error: {str(e)}")
-        raise  # `error_handler.py`에서 400 처리
+        raise  
 
     except Exception as e:
         current_app.logger.error(f"Unexpected error in change_password: {str(e)}")
-        raise  # `error_handler.py`에서 500 처리
+        raise
 
 
 @user_bp.route("/<user_id>", methods=["DELETE"])
@@ -50,16 +52,20 @@ def delete_account_route(user_id):
     :return: JSON 응답 (회원 탈퇴 성공 메시지)
     """
     try:
+        if not user_id:
+            raise ValueError("유효한 사용자 ID가 필요합니다.")  
+
         data = request.get_json()
         if not data or "access_token" not in data:
             raise ValueError("액세스 토큰이 필요합니다.")
 
+    # delete_account() 내부에서 JWT 검증하므로 여기서는 user_id를 그대로 전달
         response = delete_account(user_id, data["access_token"])
         return jsonify(response), 200
 
     except ValueError as e:
         current_app.logger.error(f"Account deletion error: {str(e)}")
-        raise  # `error_handler.py`에서 400 처리
+        raise  
 
     except PermissionError as e:
         current_app.logger.error(f"Permission error in delete_account: {str(e)}")

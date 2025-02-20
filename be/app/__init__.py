@@ -7,12 +7,17 @@ from app.utils.error_handler import register_error_handlers  # 에러 핸들러 
 from flask_swagger_ui import get_swaggerui_blueprint
 from flask_cors import CORS  # CORS 지원 추가
 from flask_mail import Mail
+from flask_jwt_extended import JWTManager
+import os
 
 mail = Mail()
+
+jwt = JWTManager() 
 
 def create_app():
     """Flask 애플리케이션 팩토리 함수"""
     app = Flask(__name__)
+    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "default_secret_key")
 
     # 환경 변수 적용
     app.config.from_object(ActiveConfig)
@@ -25,6 +30,9 @@ def create_app():
 
     # 모델 초기화
     init_models()
+
+    # JWTManager 초기화
+    jwt.init_app(app)
 
     # 라우트 등록
     register_routes(app)

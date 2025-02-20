@@ -6,16 +6,37 @@
         "version": "1.0.0"
     },
     "host": "127.0.0.1:5000",
-    "schemes": ["http"],
+    "schemes": [
+        "http"
+    ],
     "tags": [
-        { "name": "home", "description": "홈 API" },
-        { "name": "auth", "description": "인증 관련 API" },
-        { "name": "user", "description": "사용자 관리 API" }
+        {
+            "name": "home",
+            "description": "홈 API"
+        },
+        {
+            "name": "auth",
+            "description": "인증 관련 API"
+        },
+        {
+            "name": "user",
+            "description": "사용자 관리 API"
+        },
+        {
+            "name": "chat",
+            "description": "채팅 API"
+        },
+        {
+            "name": "diary",
+            "description": "다이어리 API"
+        }
     ],
     "paths": {
         "/": {
             "get": {
-                "tags": ["home"],
+                "tags": [
+                    "home"
+                ],
                 "summary": "홈 화면",
                 "description": "RobotPet API의 홈",
                 "responses": {
@@ -24,19 +45,23 @@
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "message": { "type": "string", "example": "Welcome to RobotPet!" }
+                                "message": {
+                                    "type": "string",
+                                    "example": "Welcome to RobotPet!"
+                                }
                             }
                         }
                     }
                 }
             }
         },
-
         "/auth/register": {
             "post": {
-                "tags": ["auth"],
+                "tags": [
+                    "auth"
+                ],
                 "summary": "회원가입",
-                "description": "새 사용자로 등록 및 이메일 인증",
+                "description": "새 사용자로 등록 ",
                 "parameters": [
                     {
                         "name": "body",
@@ -45,20 +70,24 @@
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "email": { 
-                                    "type": "string", 
-                                    "example": "test1@test.com" 
+                                "email": {
+                                    "type": "string",
+                                    "example": "test1@test.com"
                                 },
-                                "password": { 
-                                    "type": "string", 
-                                    "example": "Password@123" 
+                                "password": {
+                                    "type": "string",
+                                    "example": "Password@123"
                                 },
-                                "confirm_password": { 
-                                    "type": "string", 
-                                    "example": "Password@123" 
+                                "confirm_password": {
+                                    "type": "string",
+                                    "example": "Password@123"
                                 }
                             },
-                            "required": ["email", "password", "confirm_password"]
+                            "required": [
+                                "email",
+                                "password",
+                                "confirm_password"
+                            ]
                         }
                     }
                 ],
@@ -68,9 +97,9 @@
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "message": { 
-                                    "type": "string", 
-                                    "example": "회원가입 요청이 완료되었습니다. 이메일을 확인하세요." 
+                                "message": {
+                                    "type": "string",
+                                    "example": "회원가입 요청이 완료되었습니다. 이메일을 확인하세요."
                                 }
                             }
                         }
@@ -84,32 +113,64 @@
                 }
             }
         },
-
-        "/auth/verify-email/{token}": {
-            "get": {
-                "tags": ["auth"],
-                "summary": "이메일 인증",
-                "description": "이메일 인증",
+        "/auth/verify-email": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "이메일 인증 (6자리 코드)",
+                "description": "사용자가 이메일 인증을 위해 받은 6자리 코드를 입력하여 인증 완료",
                 "parameters": [
                     {
-                        "name": "token",
-                        "in": "path",
+                        "name": "body",
+                        "in": "body",
                         "required": true,
-                        "type": "string",
-                        "example": "eyJhbGciOiJIUzI1..."
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "email": {
+                                    "type": "string",
+                                    "example": "test1@test.com"
+                                },
+                                "code": {
+                                    "type": "string",
+                                    "example": "123456"
+                                }
+                            },
+                            "required": [
+                                "email",
+                                "code"
+                            ]
+                        }
                     }
                 ],
                 "responses": {
-                    "200": { "description": "이메일 인증 성공" },
-                    "400": { "description": "잘못된 또는 만료된 토큰" },
-                    "500": { "description": "서버 오류" }
+                    "200": {
+                        "description": "이메일 인증 성공",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "이메일 인증이 완료되었습니다."
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "잘못된 요청 또는 인증 코드 불일치"
+                    },
+                    "500": {
+                        "description": "서버 오류"
+                    }
                 }
             }
         },
-
         "/auth/login": {
             "post": {
-                "tags": ["auth"],
+                "tags": [
+                    "auth"
+                ],
                 "summary": "로그인",
                 "description": "이메일과 비밀번호를 사용한 로그인",
                 "parameters": [
@@ -120,9 +181,18 @@
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "email": { "type": "string", "example": "test1@test.com" },
-                                "password": { "type": "string", "example": "Password@123" },
-                                "remember_me": { "type": "boolean", "example": true }
+                                "email": {
+                                    "type": "string",
+                                    "example": "test1@test.com"
+                                },
+                                "password": {
+                                    "type": "string",
+                                    "example": "Password@123"
+                                },
+                                "remember_me": {
+                                    "type": "boolean",
+                                    "example": true
+                                }
                             }
                         }
                     }
@@ -133,54 +203,35 @@
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "access_token": { "type": "string", "example": "eyJhbGciOiJIUzI1..." },
-                                "refresh_token": { "type": "string", "example": "eyJhbGciOiJIUzI1..." },
-                                "redirect_url": { "type": "string", "example": "http://localhost:3000/home" }
+                                "access_token": {
+                                    "type": "string",
+                                    "example": "eyJhbGciOiJIUzI1..."
+                                },
+                                "refresh_token": {
+                                    "type": "string",
+                                    "example": "eyJhbGciOiJIUzI1..."
+                                },
+                                "redirect_url": {
+                                    "type": "string",
+                                    "example": "http://localhost:3000/home"
+                                }
                             }
                         }
                     },
-                    "400": { "description": "잘못된 요청" },
-                    "401": { "description": "인증 실패" }
-                }
-            }
-        },
-
-        "/auth/token": {
-            "put": {
-                "tags": ["auth"],
-                "summary": "액세스 토큰 갱신",
-                "description": "리프레시 토큰을 사용하여 새로운 액세스 토큰 발급",
-                "parameters": [
-                    {
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "refresh_token": { "type": "string", "example": "eyJhbGciOiJIUzI1..." }
-                            }
-                        }
+                    "400": {
+                        "description": "잘못된 요청"
+                    },
+                    "401": {
+                        "description": "인증 실패"
                     }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "새로운 액세스 토큰 발급",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "access_token": { "type": "string", "example": "eyJhbGciOiJIUzI1..." }
-                            }
-                        }
-                    },
-                    "401": { "description": "토큰이 만료되었거나 유효하지 않음" }
                 }
             }
         },
-
         "/auth/logout": {
             "post": {
-                "tags": ["auth"],
+                "tags": [
+                    "auth"
+                ],
                 "summary": "로그아웃",
                 "description": "사용자 로그아웃 및 액세스 토큰 무효화",
                 "parameters": [
@@ -191,22 +242,32 @@
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "access_token": { "type": "string", "example": "eyJhbGciOiJIUzI1..." }
+                                "access_token": {
+                                    "type": "string",
+                                    "example": "eyJhbGciOiJIUzI1..."
+                                }
                             }
                         }
                     }
                 ],
                 "responses": {
-                    "200": { "description": "로그아웃 성공" },
-                    "400": { "description": "잘못된 요청" },
-                    "401": { "description": "유효하지 않은 토큰" }
+                    "200": {
+                        "description": "로그아웃 성공"
+                    },
+                    "400": {
+                        "description": "잘못된 요청"
+                    },
+                    "401": {
+                        "description": "유효하지 않은 토큰"
+                    }
                 }
             }
         },
-
         "/users/{user_id}/password": {
             "patch": {
-                "tags": ["user"],
+                "tags": [
+                    "user"
+                ],
                 "summary": "비밀번호 변경",
                 "description": "사용자의 비밀번호 변경(로그인된 상태에서 변경)",
                 "parameters": [
@@ -224,68 +285,146 @@
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "old_password": { "type": "string", "example": "Password@123" },
-                                "new_password": { "type": "string", "example": "NewPassword@456" }
+                                "old_password": {
+                                    "type": "string",
+                                    "example": "Password@123"
+                                },
+                                "new_password": {
+                                    "type": "string",
+                                    "example": "NewPassword@456"
+                                }
                             }
                         }
                     }
                 ],
                 "responses": {
-                    "200": { "description": "비밀번호 변경 성공" },
-                    "400": { "description": "잘못된 요청 또는 기존 비밀번호 불일치" }
+                    "200": {
+                        "description": "비밀번호 변경 성공"
+                    },
+                    "400": {
+                        "description": "잘못된 요청 또는 기존 비밀번호 불일치"
+                    }
                 }
             }
         },
-
         "/auth/reset-password-request": {
             "post": {
-                "tags": ["auth"],
+                "tags": [
+                    "auth"
+                ],
                 "summary": "비밀번호 재설정 요청",
                 "description": "이메일로 비밀번호 재설정 링크 발송",
-                "parameters": [{
-                    "in": "body",
-                    "name": "body",
-                    "required": true,
-                    "schema": {
-                        "type": "object",
-                        "properties": {
-                            "email": { "type": "string", "example": "test1@test.com" }
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "email": {
+                                    "type": "string",
+                                    "example": "test1@test.com"
+                                }
+                            }
                         }
                     }
-                }],
+                ],
                 "responses": {
-                    "200": { "description": "비밀번호 재설정 링크 전송 완료" }
+                    "200": {
+                        "description": "비밀번호 재설정 링크 전송 완료"
+                    }
                 }
             }
         },
         "/auth/reset-password": {
             "post": {
-                "tags": ["auth"],
+                "tags": [
+                    "auth"
+                ],
                 "summary": "비밀번호 재설정",
-                "description": "토큰을 이용해 비밀번호 변경(비로그인)",
-                "parameters": [{
-                    "in": "body",
-                    "name": "body",
-                    "required": true,
-                    "schema": {
-                        "type": "object",
-                        "properties": {
-                            "token": { "type": "string" },
-                            "email": { "type": "string", "example": "test1@test.com" },
-                            "new_password": { "type": "string", "example": "NewPassword123!" },
-                            "confirm_password": { "type": "string", "example": "NewPassword123!" }
+                "description": "토큰을 이용해 비밀번호 변경",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "token": {
+                                    "type": "string"
+                                },
+                                "email": {
+                                    "type": "string",
+                                    "example": "test1@test.com"
+                                },
+                                "new_password": {
+                                    "type": "string",
+                                    "example": "NewPassword123!"
+                                },
+                                "confirm_password": {
+                                    "type": "string",
+                                    "example": "NewPassword123!"
+                                }
+                            },
+                            "required": [
+                                "token",
+                                "email",
+                                "new_password",
+                                "confirm_password"
+                            ]
                         }
                     }
-                }],
+                ],
                 "responses": {
-                    "200": { "description": "비밀번호 변경 성공" }
+                    "200": {
+                        "description": "비밀번호 변경 성공"
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "비밀번호 재설정 페이지 로드",
+                "description": "사용자가 비밀번호를 재설정할 때 토큰을 검증하여 해당 페이지를 로드",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "query",
+                        "required": true,
+                        "type": "string",
+                        "description": "비밀번호 재설정 토큰"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "토큰 검증 성공 및 비밀번호 재설정 페이지 로드",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "비밀번호 재설정 페이지를 로드합니다."
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "잘못된 토큰 또는 만료된 토큰"
+                    },
+                    "500": {
+                        "description": "서버 오류"
+                    }
                 }
             }
         },
-
         "/users/{user_id}": {
             "get": {
-                "tags": ["user"],
+                "tags": [
+                    "user"
+                ],
                 "summary": "사용자 정보 조회 (미구현)",
                 "description": "사용자 정보 조회 기능이 미구현",
                 "parameters": [
@@ -298,11 +437,15 @@
                     }
                 ],
                 "responses": {
-                    "501": { "description": "미구현 기능" }
+                    "501": {
+                        "description": "미구현 기능"
+                    }
                 }
             },
             "delete": {
-                "tags": ["user"],
+                "tags": [
+                    "user"
+                ],
                 "summary": "회원 탈퇴",
                 "description": "사용자 계정 삭제",
                 "parameters": [
@@ -320,34 +463,242 @@
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "access_token": { "type": "string", "example": "access_token" }
+                                "access_token": {
+                                    "type": "string",
+                                    "example": "access_token"
+                                }
                             }
                         }
                     }
                 ],
                 "responses": {
-                    "200": { "description": "계정 삭제 성공" },
-                    "400": { "description": "잘못된 요청" },
-                    "403": { "description": "본인만 삭제 가능" }
+                    "200": {
+                        "description": "계정 삭제 성공"
+                    },
+                    "400": {
+                        "description": "잘못된 요청"
+                    },
+                    "403": {
+                        "description": "본인만 삭제 가능"
+                    }
                 }
             }
-        },        
-
+        },
+        "/auth/verify-email-request": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "이메일 인증 요청",
+                "description": "사용자가 이메일을 입력하고 인증 요청 시 입력한 이메일로 인증 코드 전송",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "email": {
+                                    "type": "string",
+                                    "example": "test1@test.com"
+                                }
+                            },
+                            "required": [
+                                "email"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "이메일 인증 코드 전송 완료",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "인증 코드가 이메일로 전송되었습니다."
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "잘못된 요청 (이메일 누락 또는 이미 가입된 이메일)",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string",
+                                    "example": "이미 가입된 이메일입니다."
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "서버 오류"
+                    }
+                }
+            }
+        },
+        "/auth/resend-verification-code": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "이메일 인증 코드 재전송",
+                "description": "이미 인증 요청한 이메일에 인증 코드를 다시 전송",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "email": {
+                                    "type": "string",
+                                    "example": "test1@test.com"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "새로운 인증 코드가 이메일로 전송됨"
+                    }
+                }
+            }
+        },
+        "/auth/refresh-token": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "액세스 토큰 갱신",
+                "description": "리프레시 토큰을 사용해 새 액세스 토큰 발급",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "refresh_token": {
+                                    "type": "string",
+                                    "example": "eyJhbGciOiJIUzI1..."
+                                }
+                            },
+                            "required": [
+                                "refresh_token"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "새로운 액세스 토큰 발급",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "access_token": {
+                                    "type": "string",
+                                    "example": "eyJhbGciOiJIUzI1..."
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "잘못된 요청 (토큰 없음 또는 만료됨)",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string",
+                                    "example": "Refresh token has expired"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "서버 오류"
+                    }
+                }
+            }
+        },
         "/users/profile": {
             "get": {
-                "tags": ["user"],
+                "tags": [
+                    "user"
+                ],
                 "summary": "프로필 조회 (미구현)",
                 "description": "프로필 조회 기능 미구현",
                 "responses": {
-                    "501": { "description": "미구현 기능" }
+                    "501": {
+                        "description": "미구현 기능"
+                    }
                 }
             },
             "patch": {
-                "tags": ["user"],
+                "tags": [
+                    "user"
+                ],
                 "summary": "프로필 수정 (미구현)",
                 "description": "프로필 수정 기능 미구현",
                 "responses": {
-                    "501": { "description": "미구현 기능" }
+                    "501": {
+                        "description": "미구현 기능"
+                    }
+                }
+            }
+        },
+        "/auth/verify-email-status": {
+            "get": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "이메일 인증 상태 확인",
+                "description": "이메일 인증했는지 상태 조회",
+                "parameters": [
+                    {
+                        "name": "email",
+                        "in": "query",
+                        "required": true,
+                        "type": "string",
+                        "example": "test1@test.com",
+                        "description": "확인할 이메일 주소"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "이메일 인증 여부 조회",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "verified": {
+                                    "type": "boolean",
+                                    "example": true
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "이메일을 입력하지 않은 경우",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string",
+                                    "example": "이메일을 입력해야 합니다."
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "서버 오류"
+                    }
                 }
             }
         }
