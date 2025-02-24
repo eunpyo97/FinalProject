@@ -206,13 +206,13 @@ export const resendVerificationCode = async (email) => {
 export const resetPasswordRequest = async (email) => {
   try {
     const response = await api.post("/auth/request-password-reset", { email });
-    return response.data;
+    return response.data; 
   } catch (error) {
     console.error(
       "비밀번호 재설정 요청 실패:",
       error.response?.data?.error || error.message
     );
-    throw error;
+    throw error; 
   }
 };
 
