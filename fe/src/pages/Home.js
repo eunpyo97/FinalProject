@@ -3,8 +3,7 @@ import useAuthStore from '../store/authStore';
 // import { logout } from '../api/auth';
 import styled from 'styled-components';
 // import Button from '../components/Button';
-import { useNavigate} from "react-router-dom";
-// import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const Container = styled.div`
   display: flex;
@@ -14,21 +13,21 @@ const Container = styled.div`
   height: 40vh;
 `;
 
-// const Button = styled.button`
-//   margin-top: 10px;
-//   padding: 10px 20px;
-//   font-size: 16px;
-//   cursor: pointer;
-//   border: none;
-//   border-radius: 5px;
-//   background-color: #007bff;
-//   color: white;
-//   transition: background 0.3s;
+const Button = styled.button`
+  margin-top: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  background-color: #A3C6ED;
+  color: white;
+  transition: background 0.3s;
 
-//   &:hover {
-//     background-color: #0056b3;
-//   }
-// `;
+  &:hover {
+    background-color: #0056b3;
+  }
+`;
 
 const Home = () => {
   const { isAuthenticated} = useAuthStore();
@@ -57,9 +56,9 @@ const Home = () => {
       <p>채팅, 달력(다이어리), 설정</p>
 
       {/* 챗봇 페이지로 이동하는 버튼 */}
-      {/* <Link to="/chat">
+      <Link to="/chat">
         <Button>챗봇 시작</Button>
-      </Link> */}
+      </Link>
     </Container>
   );
 };

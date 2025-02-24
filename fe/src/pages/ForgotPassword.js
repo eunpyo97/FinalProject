@@ -24,7 +24,7 @@ const Input = styled.input`
 const Message = styled.p`
   margin-top: 10px;
   font-size: 14px;
-  color: ${({ success }) => (success ? "green" : "red")};
+  color: ${({ success }) => (success === "true" ? "green" : "red")};
 `;
 
 const ForgotPassword = () => {
@@ -43,9 +43,8 @@ const ForgotPassword = () => {
     setMessage("");
 
     try {
-      await resetPasswordRequest({ email });
+      await resetPasswordRequest(email); // 이메일만 전달
       setMessage("비밀번호 재설정 링크가 이메일로 전송되었습니다.");
-
       setTimeout(() => navigate("/login"), 5000);
     } catch (error) {
       setMessage(error.response?.data?.error || "비밀번호 재설정 요청 실패");
@@ -67,7 +66,9 @@ const ForgotPassword = () => {
         {isLoading ? <Spinner /> : "비밀번호 재설정 요청"}
       </Button>
       {message && (
-        <Message success={message.includes("성공")}>{message}</Message>
+        <Message success={message.includes("전송되었습니다") ? "true" : undefined}>
+          {message}
+        </Message>
       )}
     </Container>
   );
