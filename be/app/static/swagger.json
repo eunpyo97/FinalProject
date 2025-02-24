@@ -29,6 +29,23 @@
         {
             "name": "diary",
             "description": "다이어리 API"
+        },
+        {
+            "name": "emotion",
+            "description": "얼굴/감정 인식 API"
+        }
+    ],
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "Authorization",
+            "description": "JWT 토큰을 포함한 Authorization 헤더"
+        }
+    },
+    "security": [
+        {
+            "BearerAuth": []
         }
     ],
     "paths": {
@@ -379,7 +396,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "비밀번호 변경 성공"
+                        "description": "비밀번호 재설정 성공"
+                    },
+                    "400": {
+                        "description": "잘못된 요청 또는 토큰 불일치"
                     }
                 }
             },
@@ -698,6 +718,1216 @@
                     },
                     "500": {
                         "description": "서버 오류"
+                    }
+                }
+            }
+        },
+        "/chat/message": {
+            "post": {
+                "tags": [
+                    "chat"
+                ],
+                "summary": "새로운 챗봇 대화 저장",
+                "description": "사용자의 메시지를 받아 챗봇 응답을 저장",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "user_id": {
+                                    "type": "string",
+                                    "example": "user_12345"
+                                },
+                                "chatroom_id": {
+                                    "type": "string",
+                                    "example": "user_12345_20240220153000"
+                                },
+                                "user_message": {
+                                    "type": "string",
+                                    "example": "요즘 너무 우울해요."
+                                },
+                                "bot_response": {
+                                    "type": "string",
+                                    "example": "그렇군요.. 요즘 많이 힘드셨겠어요. 어떤 일이 있으셨나요?"
+                                },
+                                "emotion_id": {
+                                    "type": "string",
+                                    "example": "65f3a2b9e5f4c2d5a3e8b1c7"
+                                },
+                                "confidence": {
+                                    "type": "number",
+                                    "example": 95.5
+                                },
+                                "conversation_end": {
+                                    "type": "boolean",
+                                    "example": false
+                                }
+                            },
+                            "required": [
+                                "user_id",
+                                "chatroom_id",
+                                "user_message",
+                                "bot_response"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "대화가 성공적으로 저장됨",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "대화가 저장되었습니다."
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "필수 값이 누락되었거나 요청이 잘못됨"
+                    },
+                    "500": {
+                        "description": "서버 오류"
+                    }
+                }
+            }
+        },
+        "/chat/{chatroom_id}": {
+            "get": {
+                "tags": [
+                    "chat"
+                ],
+                "summary": "특정 채팅방의 대화 기록 조회",
+                "description": "특정 채팅방의 대화 기록 반환",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "chatroom_id",
+                        "in": "path",
+                        "required": true,
+                        "type": "string",
+                        "example": "user_12345_20240220153000"
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "type": "integer",
+                        "example": 10
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "채팅방의 대화 기록 반환",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "user_message": {
+                                        "type": "string"
+                                    },
+                                    "bot_response": {
+                                        "type": "string"
+                                    },
+                                    "timestamp": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "해당 채팅방을 찾을 수 없음"
+                    },
+                    "500": {
+                        "description": "서버 오류"
+                    }
+                }
+            }
+        },
+        "/chat/{chatroom_id}/end": {
+            "put": {
+                "tags": [
+                    "chat"
+                ],
+                "summary": "특정 채팅방의 대화 종료",
+                "description": "특정 채팅방을 종료 상태로 변경",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "chatroom_id",
+                        "in": "path",
+                        "required": true,
+                        "type": "string",
+                        "example": "user_12345_20240220153000"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "대화 채팅방이 종료됨",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "대화 채팅방이 종료되었습니다."
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "서버 오류"
+                    }
+                }
+            }
+        },
+        "/chat/message/{message_id}": {
+            "delete": {
+                "tags": [
+                    "chat"
+                ],
+                "summary": "특정 메시지 삭제",
+                "description": "대화 내 특정 메시지 삭제",
+                "parameters": [
+                    {
+                        "name": "message_id",
+                        "in": "path",
+                        "required": true,
+                        "type": "string",
+                        "example": "65f3a2b9e5f4c2d5a3e8b1c7"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "메시지 삭제 성공",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "메시지가 삭제되었습니다."
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "해당 메시지를 찾을 수 없음"
+                    },
+                    "500": {
+                        "description": "서버 오류"
+                    }
+                }
+            }
+        },
+        "/chat/chatroom": {
+            "post": {
+                "tags": [
+                    "chat"
+                ],
+                "summary": "새로운 채팅 방 생성",
+                "description": "사용자 ID를 받아 새로운 채팅방을 생성합니다.",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": true,
+                        "type": "string",
+                        "example": "user123"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "새로운 채팅방이 성공적으로 생성됨",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "chatroom_id": {
+                                    "type": "string",
+                                    "example": "user123_20240220123045"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "필수 값(user_id)이 누락됨"
+                    },
+                    "500": {
+                        "description": "서버 내부 오류"
+                    }
+                }
+            }
+        },
+        "/chat/history/{user_id}": {
+            "get": {
+                "tags": [
+                    "chat"
+                ],
+                "summary": "사용자의 모든 채팅 채팅방 조회",
+                "description": "특정 사용자 ID에 대한 모든 채팅 채팅방 목록을 반환합니다.",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "type": "string",
+                        "example": "user123"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "사용자의 채팅 채팅방 목록 조회 성공",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "chatrooms": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "사용자의 채팅 채팅방이 없음"
+                    },
+                    "500": {
+                        "description": "서버 내부 오류"
+                    }
+                }
+            }
+        },
+        "/chat/preview": {
+            "post": {
+                "tags": [
+                    "chat"
+                ],
+                "summary": "RAG 검색 결과 미리보기",
+                "description": "사용자의 메시지를 입력받아 RAG 검색 결과를 반환합니다.",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "user_message": {
+                                    "type": "string",
+                                    "example": "요즘 너무 우울해."
+                                }
+                            },
+                            "required": [
+                                "user_message"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "RAG 검색 결과 반환",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "retrieved_documents": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "필수 값(user_message)이 누락됨"
+                    },
+                    "500": {
+                        "description": "서버 내부 오류"
+                    }
+                }
+            }
+        },
+        "/chat/rag-response": {
+            "post": {
+                "tags": [
+                    "chat"
+                ],
+                "summary": "RAG 기반 상담 챗봇 응답",
+                "description": "사용자의 고민을 입력하면 RAG 검색을 반영하여 상담 챗봇이 응답합니다.",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "user_message": {
+                                    "type": "string",
+                                    "example": "요즘 너무 우울해."
+                                }
+                            },
+                            "required": [
+                                "user_message"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "챗봇 응답 성공",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "user_message": {
+                                    "type": "string",
+                                    "example": "요즘 너무 우울해."
+                                },
+                                "retrieved_documents": {
+                                    "type": "string",
+                                    "enum": [
+                                        "반영됨",
+                                        "반영 안 됨"
+                                    ],
+                                    "example": "반영됨"
+                                },
+                                "bot_response": {
+                                    "type": "string",
+                                    "example": "그렇군요.. 요즘 많이 힘드셨겠어요. 최근에 특별히 걱정되는 일이 있으셨나요?"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "잘못된 요청 (user_message 없음)",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string",
+                                    "example": "user_message는 필수 입력값입니다."
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "서버 오류",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string",
+                                    "example": "서버 오류가 발생했습니다."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/history/search": {
+            "get": {
+                "tags": [
+                    "chat"
+                ],
+                "summary": "사용자의 채팅방 내용 검색",
+                "description": "검색어를 기반으로 사용자의 채팅방 목록 반환",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "description": "검색을 요청한 사용자의 고유 ID",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "description": "검색어 (채팅방 ID 또는 메시지 내용)",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "검색 성공",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "chatrooms": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "chatroom_id": {
+                                                "type": "string",
+                                                "example": "abc123"
+                                            },
+                                            "timestamp": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2023-10-01T12:34:56Z"
+                                            },
+                                            "conversation_end": {
+                                                "type": "boolean",
+                                                "example": false
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "잘못된 요청 (검색어 누락)",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string",
+                                    "example": "검색어가 필요합니다."
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "인증 실패",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string",
+                                    "example": "인증이 필요합니다."
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "서버 내부 오류",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string",
+                                    "example": "서버 내부 오류"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/chatroom/{chatroom_id}": {
+            "delete": {
+                "tags": [
+                    "chat"
+                ],
+                "summary": "특정 채팅방 삭제",
+                "description": "사용자의 특정 채팅방 삭제",
+                "parameters": [
+                    {
+                        "name": "chatroom_id",
+                        "in": "path",
+                        "description": "삭제할 채팅방의 고유 ID",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "삭제 성공",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "채팅방이 삭제되었습니다."
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "인증 실패",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string",
+                                    "example": "인증이 필요합니다."
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "채팅방을 찾을 수 없음",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string",
+                                    "example": "채팅방을 찾을 수 없습니다."
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "서버 내부 오류",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string",
+                                    "example": "서버 내부 오류"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/diary/summary": {
+            "post": {
+                "tags": [
+                    "diary"
+                ],
+                "summary": "대화 내용 요약",
+                "description": "사용자의 채팅방 ID를 기반으로 대화 내용을 요약하여 일기 형식으로 생성",
+                "parameters": [
+                    {
+                        "name": "chatroom_id",
+                        "in": "body",
+                        "description": "대화 내용 요약을 위한 채팅방 ID",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "chatroom_id": {
+                                    "type": "string",
+                                    "example": "chatroom_123"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "대화 내용 요약 성공",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "summary": {
+                                    "type": "string",
+                                    "example": "오늘 대화는 모두 긍정적이었어요."
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "잘못된 요청 (chatroom_id가 제공되지 않음)",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string",
+                                    "example": "chatroom_id가 필요합니다."
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "서버 내부 오류",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string",
+                                    "example": "서버 내부 오류"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/diary/save": {
+            "post": {
+                "tags": [
+                    "diary"
+                ],
+                "summary": "일기 내용 저장",
+                "description": "요약된 대화 내용을 사용자 ID와 감정 정보와 함께 일기 형식으로 저장",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "body",
+                        "description": "사용자의 고유 ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "user_123"
+                        }
+                    },
+                    {
+                        "name": "content",
+                        "in": "body",
+                        "description": "대화 내용 요약 또는 일기 내용",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "오늘은 친구와 좋은 대화를 나누었어요."
+                        }
+                    },
+                    {
+                        "name": "date",
+                        "in": "body",
+                        "description": "일기 작성 날짜 (기본값: 오늘 날짜)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "2025-02-23"
+                        }
+                    },
+                    {
+                        "name": "emotion",
+                        "in": "body",
+                        "description": "일기 작성 시 감정 상태",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "happy"
+                        }
+                    },
+                    {
+                        "name": "summary",
+                        "in": "body",
+                        "description": "대화를 일기형식으로 요약",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "오늘 대화는 긍정적인 분위기였어요."
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "일기 저장 성공",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "일기 저장 성공!"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "잘못된 요청 (필수 값이 없거나 유효하지 않음)",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "사용자 ID와 일기 내용은 필수입니다!"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "서버 내부 오류",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string",
+                                    "example": "서버 내부 오류"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/diary/calendar/emoji": {
+            "post": {
+                "tags": [
+                    "diary"
+                ],
+                "summary": "대화에서 감지된 감정에 따라 달력에 이모지 표시",
+                "description": "사용자가 선택한 날짜에 가장 많이 감지된 감정을 기반으로 달력에 이모지를 표시",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "body",
+                        "description": "사용자의 고유 ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "user_123"
+                        }
+                    },
+                    {
+                        "name": "date",
+                        "in": "body",
+                        "description": "이모지를 표시할 날짜",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "2025-02-23"
+                        }
+                    },
+                    {
+                        "name": "emotion_emoji",
+                        "in": "body",
+                        "description": "가장 많이 감지된 감정을 표현하는 이모지",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "😊"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "이모지 표시 성공",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "이모지 표시 성공!"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "잘못된 요청 (필수 값이 없거나 유효하지 않음)",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "사용자 ID, 날짜, 이모지는 필수입니다!"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "서버 내부 오류",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string",
+                                    "example": "서버 내부 오류"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/diary/list": {
+            "get": {
+                "tags": [
+                    "diary"
+                ],
+                "summary": "특정 날짜에 작성된 일기 목록 조회",
+                "description": "사용자가 특정 날짜에 작성한 일기 목록을 조회하는 API",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "사용자의 고유 ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "user_123"
+                        }
+                    },
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "description": "조회할 날짜 (형식: YYYY-MM-DD)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "2025-02-23"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "일기 목록 조회 성공",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "user_id": {
+                                        "type": "string",
+                                        "example": "user_123"
+                                    },
+                                    "date": {
+                                        "type": "string",
+                                        "example": "2025-02-23"
+                                    },
+                                    "content": {
+                                        "type": "string",
+                                        "example": "오늘 하루도 잘 보냈어요. 기분이 좋았습니다."
+                                    },
+                                    "emotion": {
+                                        "type": "string",
+                                        "example": "happy"
+                                    },
+                                    "summary": {
+                                        "type": "string",
+                                        "example": "하루 종일 기분이 좋았고, 긍정적인 일들이 많았다."
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "잘못된 요청 (필수 값이 없거나 유효하지 않음)",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "사용자 ID와 날짜는 필수입니다!"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "서버 내부 오류",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string",
+                                    "example": "서버 내부 오류"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/diary/{diary_id}": {
+            "get": {
+                "tags": [
+                    "diary"
+                ],
+                "summary": "일기 상세 조회",
+                "description": "특정 일기의 상세 정보를 조회하는 API",
+                "parameters": [
+                    {
+                        "name": "diary_id",
+                        "in": "path",
+                        "description": "상세 조회할 일기의 고유 ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "diary_123"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "일기 상세 조회 성공",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "user_id": {
+                                    "type": "string",
+                                    "example": "user_123"
+                                },
+                                "date": {
+                                    "type": "string",
+                                    "example": "2025-02-23"
+                                },
+                                "content": {
+                                    "type": "string",
+                                    "example": "오늘 하루도 잘 보냈어요. 기분이 좋았습니다."
+                                },
+                                "emotion": {
+                                    "type": "string",
+                                    "example": "happy"
+                                },
+                                "summary": {
+                                    "type": "string",
+                                    "example": "하루 종일 기분이 좋았고, 긍정적인 일들이 많았다."
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "일기 없음 (해당 ID에 대한 일기 없음)",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "일기 없음"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "서버 내부 오류",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string",
+                                    "example": "서버 내부 오류"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/diary/delete/{diary_id}": {
+            "delete": {
+                "tags": [
+                    "diary"
+                ],
+                "summary": "일기 삭제",
+                "description": "특정 일기를 삭제하는 API",
+                "parameters": [
+                    {
+                        "name": "diary_id",
+                        "in": "path",
+                        "description": "삭제할 일기의 고유 ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "diary_123"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "일기 삭제 성공",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "일기 삭제 성공!"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "일기 삭제 실패",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "일기 삭제 실패!"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "서버 내부 오류",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string",
+                                    "example": "서버 내부 오류"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/diary/update/{diary_id}": {
+            "put": {
+                "tags": [
+                    "diary"
+                ],
+                "summary": "일기 내용 수정",
+                "description": "특정 일기의 내용을 수정하는 API",
+                "parameters": [
+                    {
+                        "name": "diary_id",
+                        "in": "path",
+                        "description": "수정할 일기의 고유 ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "diary_123"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "content": {
+                                        "type": "string",
+                                        "description": "새로운 일기 내용",
+                                        "example": "오늘은 날씨가 정말 좋았다."
+                                    },
+                                    "emotion": {
+                                        "type": "string",
+                                        "description": "새로운 감정 상태",
+                                        "example": "행복"
+                                    }
+                                },
+                                "required": [
+                                    "content"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "일기 수정 성공",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "일기 수정 성공!"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "일기 수정 실패",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "일기 내용은 필수입니다!"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "서버 내부 오류",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string",
+                                    "example": "서버 내부 오류"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/diary/search": {
+            "get": {
+                "tags": [
+                    "diary"
+                ],
+                "summary": "일기 내용 검색",
+                "description": "특정 사용자 ID와 검색어를 기준으로 일기 내용을 검색하는 API",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "검색할 사용자의 고유 ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "user_123"
+                        }
+                    },
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "description": "검색할 키워드",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "오늘"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "검색 결과 반환",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "diary_id": {
+                                        "type": "string",
+                                        "example": "diary_123"
+                                    },
+                                    "content": {
+                                        "type": "string",
+                                        "example": "오늘은 날씨가 너무 좋았다. 기분도 좋았다."
+                                    },
+                                    "date": {
+                                        "type": "string",
+                                        "example": "2025-02-23"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "필수 입력값 누락",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "사용자 ID와 검색어는 필수입니다!"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "서버 내부 오류",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string",
+                                    "example": "서버 내부 오류"
+                                }
+                            }
+                        }
                     }
                 }
             }

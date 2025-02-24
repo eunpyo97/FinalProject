@@ -87,36 +87,40 @@ const ResetPassword = () => {
   };
 
   const handleResetPassword = async () => {
-    if (passwordValidation.length > 0) {
+    if (passwordValidation.some(Boolean)) {
       setMessage("비밀번호가 유효하지 않습니다.");
       return;
     }
-
+  
     if (!passwordMatch) {
       setMessage("비밀번호가 일치하지 않습니다.");
       return;
     }
-
+  
     setIsLoading(true);
     setMessage("");
-
+  
     try {
-      await resetPassword(
+      const response = await resetPassword(
         searchParams.get("token"),
         email,
         newPassword,
         confirmPassword
       );
-      alert("비밀번호가 변경되었습니다.");
-      navigate("/login");
-      // setMessage("비밀번호가 성공적으로 변경되었습니다.");
-      // setTimeout(() => navigate("/login"), 3000);
+  
+      if (response?.message) {
+        alert(response.message); 
+        navigate("/login"); 
+      } else {
+        setMessage("비밀번호 변경에 실패했습니다.");
+      }
     } catch (error) {
       setMessage(error.response?.data?.error || "비밀번호 변경 실패");
     } finally {
       setIsLoading(false);
     }
   };
+  
 
   return (
     <Container>

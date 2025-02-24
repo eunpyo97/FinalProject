@@ -23,9 +23,9 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # MongoDB 설정
-    # MONGO_URI = os.getenv("MONGO_URI")
-    # if not MONGO_URI:
-    #     raise ValueError("MongoDB 환경 변수(MONGO_URI)가 설정되지 않았습니다.")
+    MONGO_URI = os.getenv("MONGO_URI")
+    if not MONGO_URI:
+        raise ValueError("MongoDB 환경 변수(MONGO_URI)가 설정되지 않았습니다.")
 
     # 이메일 설정
     MAIL_SERVER = "smtp.gmail.com"
@@ -47,7 +47,7 @@ class Config:
 class ProductionConfig(Config):
     """배포 환경 설정"""
     DEBUG = False
-    BASE_URL = os.getenv("PROD_BASE_URL", "https://your-production-domain.com")
+    BASE_URL = os.getenv("PROD_BASE_URL", "http://localhost:3000")
 
 
 class DevelopmentConfig(Config):

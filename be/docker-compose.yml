@@ -21,6 +21,23 @@ services:
     networks:
       - backend_network
 
+  # flask:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: flask_server
+  #   restart: always
+  #   ports:
+  #     - "5000:5000"
+  #   environment:
+  #     - FLASK_ENV=development
+  #     - REDIS_HOST=redis
+  #     - REDIS_PORT=6379
+  #   depends_on:
+  #     - redis
+  #   networks:
+  #     - backend_network
+
 volumes:
   redis_data:
     driver: local

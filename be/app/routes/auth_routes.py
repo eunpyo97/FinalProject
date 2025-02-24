@@ -20,9 +20,9 @@ from jose import jwt
 from app.models.users import User
 import redis
 import os
-
 from werkzeug.security import generate_password_hash
-from app.database import db  
+from app.database import db, mongo
+from datetime import timedelta
 
 
 
@@ -55,9 +55,20 @@ def register():
     try:
         data = request.get_json()
         response = register_user(data["email"], data["password"], data["confirm_password"])
+        user = User.query.filter_by(email=data["email"]).first()
+        if user:
+            response["user_id"] = user.user_id 
+        
         return jsonify(response), 201
     except ValueError as e:
         current_app.logger.error(f"Registration error: {str(e)}")
+
+        # 회원가입 실패 시 MongoDB에서도 user_id 삭제 (롤백)
+        if "email" in data:
+            user = User.query.filter_by(email=data["email"]).first()
+            if user:
+                mongo.db.user_sessions.delete_one({"user_id": user.user_id})
+
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         current_app.logger.error(f"Unexpected error in registration: {str(e)}")
@@ -200,43 +211,92 @@ def login():
     """
     try:
         data = request.get_json()
+        if not data:
+            raise ValueError("잘못된 요청 형식입니다. JSON 데이터를 제공해야 합니다.")
+        
+        if "email" not in data or "password" not in data:
+            raise ValueError("이메일과 비밀번호를 모두 입력해야 합니다.")
+
+        current_app.logger.info(f"로그인 요청: {data['email']}")
+
         response = authenticate_user(data["email"], data["password"])
-        return jsonify(response), 200
+        
+        if not response or "access_token" not in response:
+            raise ValueError("인증 실패: 예상치 못한 응답 형식입니다.")
+
+        current_app.logger.info(f"로그인 성공: user_id={response.get('user_id', 'Unknown')}")
+
     except ValueError as e:
         current_app.logger.error(f"Login error: {str(e)}")
         return jsonify({"error": str(e)}), 400
+    except KeyError as e:
+        current_app.logger.error(f"KeyError: 필수 필드 누락 {str(e)}")
+        return jsonify({"error": "요청 데이터에 필요한 필드가 없습니다."}), 400
     except Exception as e:
-        current_app.logger.error(f"Unexpected error in login: {str(e)}")
+        current_app.logger.error(f"Unexpected error in authentication: {str(e)}")
         return jsonify({"error": "서버 오류가 발생했습니다."}), 500
 
+    # MongoDB 조회
+    try:
+        active_sessions = mongo.db.user_sessions.count_documents({"user_id": response["user_id"]})
+        current_app.logger.info(f"현재 로그인된 세션 수: {active_sessions}")
 
-@auth_bp.route("/refresh-token", methods=["POST"])  
+        if active_sessions > 1:
+            current_app.logger.warning(f"MongoDB에 중복된 로그인 세션 감지: user_id={response['user_id']}")
+
+    except Exception as e:
+        current_app.logger.error(f"MongoDB 조회 중 오류 발생: {str(e)}")
+        return jsonify({"error": "서버 오류가 발생했습니다. (DB 조회 실패)"}), 500
+
+    return jsonify(response), 200
+
+
+@auth_bp.route("/refresh-token", methods=["POST"])
 def refresh():
     """
-    리프레시 토큰 API (수정됨)
-
-    요청 형식:
-    {
-        "refresh_token": "<JWT_REFRESH_TOKEN>"
-    }
-
-    응답:
-    200 OK
-    {
-        "access_token": "<새로운 JWT_ACCESS_TOKEN>"
-    }
+    리프레시 토큰을 이용해 새로운 액세스 토큰 발급
     """
     try:
         data = request.get_json()
-        decoded_token = verify_token(data["refresh_token"])
-        access_token, _ = generate_tokens(decoded_token["user_id"])
+        if not data or "refresh_token" not in data:
+            raise ValueError("리프레시 토큰이 제공되지 않았습니다.")
+
+        refresh_token = data["refresh_token"]
+        current_app.logger.info(f"[DEBUG] 리프레시 토큰 검증 시작: {refresh_token}")
+
+        # 리프레시 토큰 검증 및 user_id 추출
+        user_id = verify_token(refresh_token)
+        current_app.logger.info(f"[DEBUG] 검증된 user_id: {user_id}")
+
+        # 세션 상태 확인 (Redis에서 세션 상태 가져오기)
+        session_key = f"user:{user_id}:session"
+        session_status = r.get(session_key)
+
+        current_app.logger.info(f"[DEBUG] Redis에서 세션 상태 확인: {session_status}")
+        if session_status is None or session_status != b'active':
+            current_app.logger.error(f"[ERROR] 세션 상태 없음 또는 inactive: 로그아웃된 사용자입니다.")
+            raise ValueError("로그아웃된 사용자입니다. 다시 로그인해주세요.")
+
+        # 새로운 액세스 토큰 발급
+        access_token, _ = generate_tokens(user_id)
+        current_app.logger.info(f"[DEBUG] 새로운 액세스 토큰 발급 완료: {access_token}")
+
         return jsonify({"access_token": access_token}), 200
+
     except jwt.ExpiredSignatureError:
+        current_app.logger.error("리프레시 토큰 만료됨")
         return jsonify({"error": "Refresh token has expired"}), 400
+
     except jwt.JWTError:
+        current_app.logger.error("유효하지 않은 리프레시 토큰")
         return jsonify({"error": "Invalid refresh token"}), 400
+
+    except ValueError as e:
+        current_app.logger.error(f"Refresh token error: {str(e)}")
+        return jsonify({"error": str(e)}), 400
+
     except Exception as e:
-        current_app.logger.error(f"Error in token refresh: {str(e)}")
+        current_app.logger.error(f"Unexpected error in refresh token: {str(e)}")
         return jsonify({"error": "서버 오류가 발생했습니다."}), 500
 
 
@@ -244,28 +304,40 @@ def refresh():
 def logout():
     """
     로그아웃 API
-
     요청 형식:
     {
         "access_token": "<JWT_ACCESS_TOKEN>"
     }
-
     응답:
     200 OK
     {
-        "message": "Logged out successfully"
+        "message": "로그아웃이 완료되었습니다."
     }
     """
     try:
         data = request.get_json()
-        response = logout_service(data.get("access_token"))
+        # 먼저 토큰 검증을 통해 user_id를 얻음
+        access_token = data.get("access_token")
+        if not access_token:
+            raise ValueError("토큰이 제공되지 않았습니다.")
+        
+        # user_id 추출
+        user_id = verify_token(access_token)
+        
+        # MongoDB에서 해당 user_id의 로그인 세션 삭제
+        mongo.db.user_sessions.delete_many({"user_id": user_id})
+        
+        # 로그아웃 서비스 호출하여 Redis에 저장된 토큰 무효화
+        response = logout_service(access_token)
         return jsonify(response), 200
+
     except ValueError as e:
         current_app.logger.error(f"Logout error: {str(e)}")
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         current_app.logger.error(f"Unexpected error in logout: {str(e)}")
         return jsonify({"error": "서버 오류가 발생했습니다."}), 500
+
 
 
 @auth_bp.route("/request-password-reset", methods=["POST"])

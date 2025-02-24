@@ -72,25 +72,17 @@ const Login = () => {
   const handleLogin = async () => {
     try {
       setIsLoading(true);
-
-      console.log("[DEBUG] 로그인 요청 시작");
-      console.log("[DEBUG] 입력된 이메일:", email);
-      console.log("[DEBUG] 입력된 비밀번호:", password);
-      console.log("[DEBUG] 로그인 유지 상태:", rememberMe);
-
+  
+      console.log("[DEBUG] 로그인 요청 시작", { email, password, rememberMe });
+  
       const response = await login(email, password, rememberMe);
-
-      console.log("[DEBUG] 서버 응답:", response);
-
-      setLogin();
-
-      // Zustand 상태 업데이트 (토큰 저장)
-      setLogin(response.access_token, rememberMe);
-
+  
+      console.log("[DEBUG] 로그인 성공, 응답 데이터:", response);
+  
+      // Zustand 상태 업데이트 (user_id 포함)
+      setLogin(response.user_id, response.access_token, rememberMe);
+  
       alert("로그인 성공! 홈 화면으로 이동합니다.");
-
-      console.log("[DEBUG] 로그인 성공, 홈 화면으로 이동");
-
       navigate("/home");
     } catch (error) {
       alert("로그인 실패: " + (error.response?.data?.error || "서버 오류"));
@@ -98,6 +90,8 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+  
+  
 
   return (
     <Container>

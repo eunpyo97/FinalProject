@@ -7,6 +7,7 @@ import Button from "../components/Button";
 import ErrorMessage from "../components/ErrorMessage";
 import { validatePassword, checkPasswordMatch } from "../utils/validation";
 import Spinner from "../components/Spinner";
+import Cookies from "js-cookie"; 
 
 const Container = styled.div`
   display: flex;
@@ -106,7 +107,6 @@ const Signup = () => {
 
       console.log("인증 요청 이메일:", email);
 
-      // 백엔드에 이메일 인증 요청
       const responseData = await verifyEmailRequest(email);
       console.log("서버 응답 데이터:", responseData);
 
@@ -197,39 +197,53 @@ const Signup = () => {
   };
 
   // 회원가입 요청
-  const handleSignup = async () => {
-    if (!email || !password || !confirmPassword) {
-      alert("모든 항목을 입력해주세요.");
-      return;
+const handleSignup = async () => {
+  if (!email || !password || !confirmPassword) {
+    alert("모든 항목을 입력해주세요.");
+    return;
+  }
+
+  if (!isEmailVerified) {
+    alert("이메일 인증이 완료되지 않았습니다.");
+    return;
+  }
+
+  if (passwordValidation.length > 0) {
+    alert("비밀번호가 유효하지 않습니다.");
+    return;
+  }
+
+  if (!passwordMatch) {
+    alert("비밀번호가 일치하지 않습니다.");
+    return;
+  }
+
+  setIsSignupLoading(true);
+
+  try {
+    const response = await signup(email, password, confirmPassword);
+
+    console.log("[DEBUG] 회원가입 성공, 서버 응답:", response);
+
+    const { user_id } = response;
+
+    if (!user_id) {
+      throw new Error("서버에서 user_id가 반환되지 않았습니다.");
     }
 
-    if (!isEmailVerified) {
-      alert("이메일 인증이 완료되지 않았습니다.");
-      return;
-    }
+    // 회원가입 후 user_id를 저장
+    localStorage.setItem("user_id", user_id);
+    Cookies.set("user_id", user_id, { expires: 7 });
 
-    if (passwordValidation.length > 0) {
-      alert("비밀번호가 유효하지 않습니다.");
-      return;
-    }
+    alert("회원가입 성공! 로그인 페이지로 이동합니다.");
+    navigate("/login");
+  } catch (error) {
+    setError(error.response?.data?.error || "회원가입 실패");
+  } finally {
+    setIsSignupLoading(false);
+  }
+};
 
-    if (!passwordMatch) {
-      alert("비밀번호가 일치하지 않습니다.");
-      return;
-    }
-
-    setIsSignupLoading(true); 
-
-    try {
-      await signup(email, password, confirmPassword);
-      alert("회원가입 성공! 로그인 페이지로 이동합니다.");
-      navigate("/login");
-    } catch (error) {
-      setError(error.response?.data?.error || "회원가입 실패");
-    } finally {
-      setIsSignupLoading(false); 
-    }
-  };
 
   return (
     <Container>
