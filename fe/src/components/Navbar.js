@@ -1,8 +1,8 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import useAuthStore from '../store/authStore';
-import Button from './Button';
-import styled from 'styled-components';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import useAuthStore from "../store/authStore";
+import Button from "./Button";
+import styled from "styled-components";
 
 const NavbarContainer = styled.nav`
   display: flex;
@@ -24,17 +24,26 @@ const Navbar = () => {
 
   return (
     <NavbarContainer>
-      <h1 onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>RobotPet</h1>
+      <h1 onClick={() => navigate("/")} style={{ cursor: "pointer" }}>
+        RobotPet
+      </h1>
       <Menu>
         {isAuthenticated ? (
           <>
-            <Button onClick={() => navigate('/home')}>홈</Button>
-            <Button onClick={logout} style={{ backgroundColor: 'red', color: 'white' }}>로그아웃</Button>
+            <Button onClick={() => navigate("/home")}>홈</Button>
+            <Button
+              onClick={async () => {
+                await logout(); 
+              }}
+              style={{ backgroundColor: "red", color: "white" }}
+            >
+              로그아웃
+            </Button>
           </>
         ) : (
           <>
-            <Button onClick={() => navigate('/login')}>로그인</Button>
-            <Button onClick={() => navigate('/signup')}>회원가입</Button>
+            <Button onClick={() => navigate("/login")}>로그인</Button>
+            <Button onClick={() => navigate("/signup")}>회원가입</Button>
           </>
         )}
       </Menu>

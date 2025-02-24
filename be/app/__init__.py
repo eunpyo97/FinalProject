@@ -1,11 +1,11 @@
 from flask import Flask
 from config.settings import ActiveConfig
-from app.database import init_db  # MySQL 초기화
-from app.models import init_models  # 모델 초기화
-from app.routes import register_routes  # 라우트 등록
-from app.utils.error_handler import register_error_handlers  # 에러 핸들러 등록
+from app.database import init_db, mongo, db # MySQL 초기화
+from app.models import init_models 
+from app.routes import register_routes 
+from app.utils.error_handler import register_error_handlers  
 from flask_swagger_ui import get_swaggerui_blueprint
-from flask_cors import CORS  # CORS 지원 추가
+from flask_cors import CORS  
 from flask_mail import Mail
 from flask_jwt_extended import JWTManager
 import os
@@ -22,11 +22,11 @@ def create_app():
     # 환경 변수 적용
     app.config.from_object(ActiveConfig)
 
-    # CORS 활성화 (Swagger UI와 API 간 요청 문제 해결)
-    CORS(app)
-
-    # 데이터베이스 초기화
+    # MongoDB와 MySQL 초기화
     init_db(app)
+
+    # CORS 활성화
+    CORS(app)
 
     # 모델 초기화
     init_models()

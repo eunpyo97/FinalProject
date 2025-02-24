@@ -84,7 +84,7 @@ DB_PASSWORD=
 DB_NAME=
 
 # MongoDB 연결 URI
-# MONGO_URI=mongodb://localhost:27017/RobotPet
+# MONGO_URI=mongodb://localhost:27017/robotpet
 SECRET_KEY=
 
 # 이메일 설정
@@ -104,14 +104,19 @@ SWAGGER_UI_URL=/api/docs
 SWAGGER_API_DOCS=/static/swagger.json
 
 # redis 설정
-# REDIS_HOST=localhost  # 로컬 redis 실행시 주석 해제하고 아래 주석하기
-REDIS_HOST=redis        
+REDIS_HOST=localhost
+# REDIS_HOST=redis  # Docker 컨테이너 내부에서는 'redis'로 접근
 REDIS_PORT=6379
 REDIS_DB=0
 
 REDIS_TIMEOUT=0         
 REDIS_MAXMEMORY=512mb 
 REDIS_MAXMEMORY_POLICY=allkeys-lru 
+
+# openai api키
+OPENAI_API_KEY=
+
+FLASK_ENV=development
 ```
   
 ## 폴더 구조
@@ -122,22 +127,34 @@ REDIS_MAXMEMORY_POLICY=allkeys-lru
 │   │   └── 📄 __init__.py
 │   ├── 📂 models/                    # DB 테이블 정의
 │   │   ├── 📄 __init__.py
+│   │   ├── 📄 chat.py
 │   │   └── 📄 users.py
 │   ├── 📂 routes/                    # 각 API 엔드포인트에 대한 라우팅 설정
 │   │   ├── 📄 __init__.py
 │   │   ├── 📄 auth_routes.py         # 인증 관련 API 
+│   │   ├── 📄 chat_routes.py         
 │   │   ├── 📄 home_routes.py         # 홈 화면
 │   │   └── 📄 user_routes.py         # 사용자 관련 API
 │   ├── 📂 services/                  # 비즈니스 로직 처리   
 │   │   ├── 📄 auth_service.py        # 인증 서비스 로직
+│   │   ├── 📄 chat_service.py        
+│   │   ├── 📄 llm_service.py
+│   │   ├── 📄 rag_service.py
 │   │   └── 📄 user_service.py        # user 서비스 로직
 │   ├── 📂 static/                
 │   │   └── 📄 swagger.json           # Swagger 설정
 │   ├── 📂 utils/                  
+│   │   ├── 📄 auth.py
 │   │   └── 📄 error_handler.py       # 공통 에러 핸들러
 │   ├── 📄 __init__.py                # Flask 애플리케이션 팩토리 함수 (create_app)
 ├── 📂 config/                     
 │   └── 📄 settings.py                # Flask 환경 변수 설정 (ActiveConfig)
+├── 📂 data/  
+│   ├── 📂 faiss_v2/                  # FAISS 벡터 DB
+│   │   ├── 📄 index.faiss
+│   │   └── 📄 index.pkl
+│   ├── 📂 model/                     # 얼굴 감정 분석 모델
+│   │   └── 📄 TEST_1efficientnet_b2_model.keras
 ├── 📄 .env                           # 환경 변수
 ├── 📄 requirements.txt               
 ├── 📄 .gitignore                     
