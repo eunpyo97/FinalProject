@@ -526,6 +526,8 @@ def request_password_reset(email):
 
     return {"message": "비밀번호 재설정 링크를 이메일로 전송했습니다."}
 
+
+
 def reset_password(token, email, new_password, confirm_password):
     """
     비밀번호 변경 (토큰 검증 후 새 비밀번호 저장)

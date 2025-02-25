@@ -128,16 +128,19 @@ FLASK_ENV=development
 │   ├── 📂 models/                    # DB 테이블 정의
 │   │   ├── 📄 __init__.py
 │   │   ├── 📄 chat.py
+│   │   ├── 📄 emotion.py
 │   │   └── 📄 users.py
 │   ├── 📂 routes/                    # 각 API 엔드포인트에 대한 라우팅 설정
 │   │   ├── 📄 __init__.py
 │   │   ├── 📄 auth_routes.py         # 인증 관련 API 
 │   │   ├── 📄 chat_routes.py         
+│   │   ├── 📄 emotion_routes.py
 │   │   ├── 📄 home_routes.py         # 홈 화면
 │   │   └── 📄 user_routes.py         # 사용자 관련 API
 │   ├── 📂 services/                  # 비즈니스 로직 처리   
 │   │   ├── 📄 auth_service.py        # 인증 서비스 로직
 │   │   ├── 📄 chat_service.py        
+│   │   ├── 📄 emotion_service.py
 │   │   ├── 📄 llm_service.py
 │   │   ├── 📄 rag_service.py
 │   │   └── 📄 user_service.py        # user 서비스 로직
@@ -156,8 +159,9 @@ FLASK_ENV=development
 │   ├── 📂 model/                     # 얼굴 감정 분석 모델
 │   │   └── 📄 TEST_1efficientnet_b2_model.keras
 ├── 📄 .env                           # 환경 변수
-├── 📄 requirements.txt               
 ├── 📄 .gitignore                     
 ├── 📄 app.py                         # Flask 실행 스크립트
+├── 📄 docker-compose.yml                          
+├── 📄 requirements.txt               
 └── 📄 README.md                      
 ```

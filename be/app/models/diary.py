@@ -1,8 +1,8 @@
-from flask_pymongo import PyMongo
 from datetime import datetime
-from bson.objectid import ObjectId  # MongoDB의 ObjectId를 처리하기 위한 모듈
+from flask_pymongo import PyMongo
+from flask import Flask
+from bson.objectid import ObjectId
 
-# Flask-PyMongo 초기화
 mongo = PyMongo()
 
 class Diary:
@@ -58,7 +58,7 @@ class Diary:
         """
         if isinstance(diary_data, Diary):
             diary_data = diary_data.to_dict()  # Diary 객체라면 딕셔너리로 변환
-        result = mongo.db.diaries.insert_one(diary_data)
+        result = mongo.db.diaries.insert_one(diary_data)  # mongo.db 사용
         return str(result.inserted_id)  # 저장된 문서의 ID를 문자열로 반환
 
     @staticmethod
@@ -68,8 +68,8 @@ class Diary:
         :param user_id: 사용자 ID
         :param date: 날짜 (ISO 형식, 예: '2023-02-01')
         """
-        diaries = mongo.db.diaries.find({"user_id": user_id, "date": date})
-        return [Diary.from_dict(diary) for diary in diaries]  # Diary 객체 리스트로 변환
+        diaries = mongo.db.diaries.find({"user_id": user_id, "date": date})  # mongo.db 사용
+        return [Diary.from_dict(diary) for diary in diaries]  
 
     @staticmethod
     def get_by_id(diary_id):
@@ -77,7 +77,7 @@ class Diary:
         일기 ID로 상세 조회
         :param diary_id: 일기 ID (문자열)
         """
-        diary = mongo.db.diaries.find_one({"_id": ObjectId(diary_id)})  # ObjectId로 변환
+        diary = mongo.db.diaries.find_one({"_id": ObjectId(diary_id)})  # mongo.db 사용
         if diary:
             return Diary.from_dict(diary)  # Diary 객체로 변환
         return None
@@ -88,19 +88,15 @@ class Diary:
         일기 ID로 삭제
         :param diary_id: 일기 ID (문자열)
         """
-        result = mongo.db.diaries.delete_one({"_id": ObjectId(diary_id)})
-        return result.deleted_count > 0  # 삭제 성공 여부 반환
+        result = mongo.db.diaries.delete_one({"_id": ObjectId(diary_id)})  # mongo.db 사용
+        return result.deleted_count > 0  
 
     @staticmethod
-    def update_by_id(diary_id, updated_data):
+    def update_by_id(diary_id, update_data):
         """
-        일기 내용 수정
+        일기 ID로 수정
         :param diary_id: 일기 ID (문자열)
-        :param updated_data: 업데이트할 데이터 (딕셔너리)
+        :param update_data: 수정할 데이터 (딕셔너리)
         """
-        updated_data["updated_at"] = datetime.utcnow()  # 수정 시 updated_at 갱신
-        result = mongo.db.diaries.update_one(
-            {"_id": ObjectId(diary_id)},  # ObjectId로 변환
-            {"$set": updated_data}
-        )
-        return result.modified_count > 0  # 수정 성공 여부 반환
+        result = mongo.db.diaries.update_one({"_id": ObjectId(diary_id)}, {"$set": update_data})  # mongo.db 사용
+        return result.modified_count > 0  
