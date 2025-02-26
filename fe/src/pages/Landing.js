@@ -1,7 +1,17 @@
 import React from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import Button from '../components/Button';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
+
+// 텍스트가 커지는 애니메이션
+const growAnimation = keyframes`
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+`;
 
 const Container = styled.div`
   display: flex;
@@ -11,15 +21,22 @@ const Container = styled.div`
   height: 40vh;
 `;
 
-const Landing = () => {
-  // const navigate = useNavigate();
+const Heading = styled.h1`
+  font-size: 50px; 
+  margin-bottom: 20px;
+  animation: ${growAnimation} 1.5s ease-out; 
+`;
 
+const Text = styled.p`
+  font-size: 24px;
+  animation: ${growAnimation} 2s ease-out 0.5s; 
+`;
+
+const Landing = () => {
   return (
     <Container>
-      <h1>환영합니다!</h1>
-      <p>로그인하거나 회원가입 해야 홈으로 들어가집니다.</p>
-      {/* <Button onClick={() => navigate('/login')}>로그인</Button>
-      <Button onClick={() => navigate('/signup')} bgColor="green" hoverColor="darkgreen">회원가입</Button> */}
+      <Heading>환영합니다!</Heading>
+      <Text>로그인하거나 회원가입 해야 홈으로 들어가집니다.</Text>
     </Container>
   );
 };

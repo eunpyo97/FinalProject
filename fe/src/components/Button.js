@@ -1,6 +1,5 @@
 import styled from 'styled-components';
 
-// StyledButton 정의
 const StyledButton = styled.button`
   padding: 10px 15px;
   border: none;
@@ -11,11 +10,10 @@ const StyledButton = styled.button`
   transition: background-color 0.3s;
 
   &:hover {
-    background-color: ${(props) => props.hoverColor || '#258DFB'};
+    background-color: ${(props) => props.hoverColor || '#57a6fa'};
   }
 `;
 
-// Button 컴포넌트 정의
 const Button = ({ children, onClick, bgColor, color, size, hoverColor }) => {
   return (
     <StyledButton

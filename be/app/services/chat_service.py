@@ -10,7 +10,7 @@ from flask import current_app
 import uuid
 from flask import jsonify
 import logging
-
+from app.services.emotion_service import get_emotion_results
 
 def chat_with_bot(user_id: str, chatroom_id: str, user_message: str, emotion_id=None, confidence=None, test_mode=False) -> dict:
   
@@ -128,6 +128,50 @@ def end_chatroom(user_id: str, chatroom_id: str) -> dict:
     except Exception as e:
         print(f"[ERROR] 채팅방 종료 중 오류 발생 (user_id={user_id}, chatroom_id={chatroom_id}): {e}")
         return {"error": "서버 내부 오류"}
+
+
+def get_chat_end_status_service(user_id, chatroom_id):
+    """
+    특정 채팅방의 종료 상태와 감정 데이터 조회
+    :param user_id: 사용자 ID
+    :param chatroom_id: 채팅방 ID
+    :return: 채팅방 종료 상태 및 감정 데이터
+    """
+    try:
+        # 채팅방 존재 여부 확인
+        chatroom = mongo.db.chatrooms.find_one({"chatroom_id": chatroom_id, "user_id": user_id})
+
+        if not chatroom:
+            return {"error": "채팅방을 찾을 수 없습니다."}, 404
+
+        # 대화 종료 상태 확인
+        conversation_end = chatroom.get("conversation_end", False)
+        # 대화가 종료된 경우 종료 타임스탬프를 반환, 없으면 None 반환
+        conversation_end_timestamp = chatroom.get("conversation_end_timestamp") if conversation_end else None
+
+        # 대화가 종료된 경우 감정 데이터 조회
+        emotion_data = {"emotions": [], "most_common": {"emotion": "default", "confidence": 0}}
+        if conversation_end:
+            emotion_data = get_emotion_results(chatroom_id, user_id)
+            # 감정 데이터가 없거나 리스트 형태가 아닐 경우 대비
+            if "emotions" not in emotion_data or not isinstance(emotion_data["emotions"], list):
+                emotion_data["emotions"] = []
+
+        return {
+            "chatroom_id": chatroom_id,
+            "conversation_end": conversation_end,
+            "conversation_end_timestamp": conversation_end_timestamp,
+            "emotions": emotion_data["emotions"]  # 항상 리스트 형태로 반환
+        }, 200
+
+    except Exception as e:
+        print(f"[ERROR] 대화 종료 상태 조회 오류: {e}")
+        return {"error": "서버 내부 오류"}, 500
+
+
+    except Exception as e:
+        print(f"[ERROR] 대화 종료 상태 조회 오류: {e}")
+        return {"error": "서버 내부 오류"}, 500
 
 
 

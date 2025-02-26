@@ -16,6 +16,7 @@ from app.services.chat_service import (
     search_chatrooms,
     modify_message_based_on_emotion,
     modify_response_with_emotion,
+    get_chat_end_status_service
 )
 from app.services.rag_service import preview_rag_search
 from app.utils.auth import jwt_required_without_bearer, login_required
@@ -138,6 +139,25 @@ def close_chat(chatroom_id):
 
     except Exception as e:
         print(f"[ERROR] close_chat 오류 (chatroom_id={chatroom_id}): {e}")
+        return jsonify({"error": "서버 내부 오류"}), 500
+
+
+@chat_bp.route("/<chatroom_id>/end", methods=["GET"])
+@jwt_required_without_bearer
+def get_chat_end_status(chatroom_id):
+    """
+    특정 채팅방의 종료 상태와 감정 데이터 조회
+    """
+    try:
+        user_id = request.user_id
+        if not user_id:
+            return jsonify({"error": "인증이 필요합니다."}), 401
+
+        response, status_code = get_chat_end_status_service(user_id, chatroom_id)
+        return jsonify(response), status_code
+
+    except Exception as e:
+        print(f"[ERROR] 대화 종료 상태 조회 오류: {e}")
         return jsonify({"error": "서버 내부 오류"}), 500
 
 
