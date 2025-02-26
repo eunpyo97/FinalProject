@@ -10,6 +10,9 @@ import Chat from "../pages/Chat";
 import ChatList from "../pages/ChatList";
 import ChatRoomDetail from "../pages/ChatRoomDetail";
 import ChatSettings from "../pages/ChatSettings";
+import Calendar from "../pages/Calendar";
+import DiaryList from "../pages/DiaryList";
+import DiaryDetail from "../pages/DiaryDetail";
 
 const AppRoutes = () => {
   return (
@@ -27,6 +30,9 @@ const AppRoutes = () => {
         <Route path="/chatlist" element={<ChatList />} />
         <Route path="/chatroom/:chatroomId" element={<ChatRoomDetail />} />
         <Route path="/chat-settings" element={<ChatSettings />} />
+        <Route path="/calendar" element={<Calendar />} />
+        <Route path="/diary" element={<DiaryList />} />
+        <Route path="/diary/:id" element={<DiaryDetail />} />
       </Route>
     </Routes>
   );

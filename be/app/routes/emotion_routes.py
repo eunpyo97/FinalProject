@@ -14,9 +14,10 @@ from app.services.emotion_service import (
     get_emotion_statistics,
     is_authorized,
 )
-from app.utils.auth import jwt_required_without_bearer
+from app.utils.auth import jwt_required_without_bearer, login_required
 import logging
 import uuid
+from bson import ObjectId  
 
 
 emotion_bp = Blueprint("emotion", __name__)
@@ -46,6 +47,8 @@ def predict():
 
         # 감정 예측
         emotion_label, confidence = predict_emotion(image, model)
+
+        print(f"예측된 감정: {emotion_label}, 신뢰도: {confidence}")
 
         # 신뢰도가 70% 이상인 경우에만 저장
         if confidence >= 0.7:
@@ -90,19 +93,23 @@ def save_emotion():
 
 
 # 특정 채팅방의 감정 데이터 조회 API
-@emotion_bp.route("results/<chatroom_id>", methods=["GET"])
-@jwt_required_without_bearer  # JWT 인증 추가
+@emotion_bp.route("/results/<chatroom_id>", methods=["GET"])
+@jwt_required_without_bearer  
 def results(chatroom_id):
-    """특정 채팅방의 감정 분석 결과를 조회"""
+    """특정 채팅방의 감정 분석 결과 조회 (가장 많이 나타난 감정 포함)"""
     try:
-        user_id = request.user_id  # JWT에서 추출한 user_id
+        user_id = request.user_id  
 
-        # 권한 확인 (해당 채팅방의 감정 데이터에 접근 가능한지 확인)
-        if not is_authorized(user_id, chatroom_id):
-            return jsonify({"message": "접근 권한이 없습니다."}), 403
+        print(f"[DEBUG] 감정 데이터 요청: user_id={user_id}, chatroom_id={chatroom_id}")
 
-        # 감정 데이터 조회
-        results = get_emotion_results(chatroom_id)
+        if not isinstance(chatroom_id, str):
+            print(f"[ERROR] chatroom_id 형식 오류: {chatroom_id}")
+            return jsonify({"message": "잘못된 chatroom_id 형식입니다."}), 400
+
+        # 감정 데이터 조회 (가장 많이 등장한 감정 포함)
+        results = get_emotion_results(chatroom_id, user_id)
+
+        print(f"[DEBUG] 채팅방({chatroom_id}) 감정 데이터 응답: {results}")
         return jsonify(results)
 
     except Exception as e:

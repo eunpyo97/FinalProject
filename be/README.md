@@ -149,7 +149,7 @@ FLASK_ENV=development
 │   ├── 📂 utils/                  
 │   │   ├── 📄 auth.py
 │   │   └── 📄 error_handler.py       # 공통 에러 핸들러
-│   ├── 📄 __init__.py                # Flask 애플리케이션 팩토리 함수 (create_app)
+│   └── 📄 __init__.py                # Flask 애플리케이션 팩토리 함수 (create_app)
 ├── 📂 config/                     
 │   └── 📄 settings.py                # Flask 환경 변수 설정 (ActiveConfig)
 ├── 📂 data/  

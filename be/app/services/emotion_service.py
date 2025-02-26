@@ -2,6 +2,7 @@ from datetime import datetime
 from app.database import mongo
 import uuid
 import logging
+from bson import ObjectId
 
 def save_emotion_data(user_id, chatroom_id, emotion, confidence):
     """
@@ -37,23 +38,60 @@ def save_emotion_data(user_id, chatroom_id, emotion, confidence):
         logging.error(f"감정 데이터 저장 오류: {e}") 
         raise RuntimeError(f"감정 데이터 저장 오류: {e}")
 
-def get_emotion_results(chatroom_id):
+def get_emotion_results(chatroom_id, user_id):
     """
-    특정 채팅방에 대한 감정 분석 결과 조회
+    특정 채팅방에 대한 감정 분석 결과 조회 (가장 많이 나온 감정 반환)
     :param chatroom_id: 채팅방 ID
+    :return: 감정 분석 결과 리스트 & 가장 많이 등장한 감정
     """
     try:
-        emotions = mongo.db.emotions.find({"chatroom_id": chatroom_id})
-        return [
-            {
-                "emotion": emotion["emotion"],
-                "confidence": emotion["confidence"],
-                "timestamp": emotion["timestamp"]
-            }
-            for emotion in emotions
-        ]
+        if not isinstance(chatroom_id, str):
+            print(f"[ERROR] chatroom_id가 문자열이 아님: {chatroom_id}")
+            return {"emotions": [], "most_common": {"emotion": "default", "confidence": 0}}
+
+        if not is_authorized(user_id, chatroom_id):
+            print(f"[ERROR] 접근 권한 없음: user_id={user_id}, chatroom_id={chatroom_id}")
+            return {"emotions": [], "most_common": {"emotion": "default", "confidence": 0}}
+
+        emotions_cursor = mongo.db.emotions.find({"chatroom_id": chatroom_id})
+
+        emotions = []
+        emotion_counts = {}
+        total_confidence = {}
+
+        for emotion_data in emotions_cursor:
+            emotion = emotion_data["emotion"]
+            confidence = emotion_data["confidence"]
+            timestamp = emotion_data["timestamp"]
+
+            # 감정 데이터 리스트에 추가
+            emotions.append({"emotion": emotion, "confidence": confidence, "timestamp": timestamp})
+
+            # 감정별 개수 세기
+            if emotion in emotion_counts:
+                emotion_counts[emotion] += 1
+                total_confidence[emotion] += confidence
+            else:
+                emotion_counts[emotion] = 1
+                total_confidence[emotion] = confidence
+
+        # 가장 많이 등장한 감정 찾기
+        if emotion_counts:
+            most_common_emotion = max(emotion_counts, key=emotion_counts.get)
+            avg_confidence = total_confidence[most_common_emotion] / emotion_counts[most_common_emotion]
+        else:
+            most_common_emotion = "default"
+            avg_confidence = 0
+
+        return {
+            "emotions": emotions,  
+            "most_common": {"emotion": most_common_emotion, "confidence": avg_confidence} 
+        }
+
     except Exception as e:
-        raise RuntimeError(f"감정 결과 조회 오류: {e}")
+        print(f"[ERROR] 감정 결과 조회 오류: {e}")
+        return {"emotions": [], "most_common": {"emotion": "default", "confidence": 0}}  
+
 
 def delete_emotion_results(chatroom_id):
     """
@@ -153,8 +191,7 @@ def is_authorized(user_id, chatroom_id):
     :return: 권한이 있으면 True, 없으면 False
     """
     try:
-        # MongoDB에서 사용자와 채팅방의 관계 확인
-        chatroom = mongo.db.chatrooms.find_one({"_id": chatroom_id, "user_id": user_id})
+        chatroom = mongo.db.chatrooms.find_one({"chatroom_id": chatroom_id, "user_id": user_id})
         return chatroom is not None
     except Exception as e:
         print(f"[ERROR] 권한 확인 실패 (user_id={user_id}, chatroom_id={chatroom_id}): {e}")

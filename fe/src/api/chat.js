@@ -79,7 +79,6 @@ export const sendMessageToBot = async (chatroomId, userMessage) => {
 // 감정 기반 챗봇 대화
 export const sendEmotionChatMessage = async (chatroomId, userMessage) => {
   try {
-    // 요청 데이터
     const requestData = {
       chatroom_id: chatroomId,
       user_message: userMessage || "", 
@@ -91,7 +90,10 @@ export const sendEmotionChatMessage = async (chatroomId, userMessage) => {
 
     console.log("서버 응답:", response.data);
 
-    // 응답 데이터 파싱
+    if (!response.data || !response.data.emotion) {
+      console.error("감정 분석 실패 또는 감정 데이터 없음.");
+    }
+
     const { bot_response, emotion, confidence, emotion_id, message } = response.data;
 
     console.log("응답 메시지:", message);
@@ -100,14 +102,14 @@ export const sendEmotionChatMessage = async (chatroomId, userMessage) => {
     console.log("감정 ID:", emotion_id);
 
     // 챗봇 응답 처리 (bot_response가 없다면 기본 메시지 사용)
-    const botResponse = bot_response || "챗봇 응답을 받을 수 없습니다.";
+    // const botResponse = bot_response || "챗봇 응답을 받을 수 없습니다.";
 
     return {
-      botResponse, 
+      botResponse: bot_response || "챗봇 응답을 받을 수 없습니다.",
       emotionData: {
-        emotion,
-        confidence, 
-        emotion_id, 
+        emotion: emotion ?? "unknown",
+        confidence: confidence ?? 0,
+        emotion_id: emotion_id ?? null,
       },
     };
   } catch (error) {
@@ -115,7 +117,10 @@ export const sendEmotionChatMessage = async (chatroomId, userMessage) => {
       "메시지 전송 실패:",
       error.response ? error.response.data : error.message
     );
-    throw error; 
+    return {
+      botResponse: "오류 발생",
+      emotionData: { emotion: "error", confidence: 0, emotion_id: null },
+    };
   }
 };
 
