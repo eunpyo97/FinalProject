@@ -4,6 +4,7 @@ import "react-calendar/dist/Calendar.css";
 import styled from "styled-components";
 import { getChatEndStatus } from "../api/calendar";
 import { getUserChatHistory } from "../api/chat";
+import { getDiaryList} from "../api/diary"; 
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
@@ -236,22 +237,32 @@ const CalendarPage = () => {
     ) : null;
   };
 
-  const handleDateClick = (selectedDate) => {
+  const handleDateClick = async (selectedDate) => {
     const formattedDate = dayjs(selectedDate)
       .tz("Asia/Seoul")
       .format("YYYY-MM-DD");
     setSelectedDate(formattedDate);
-    const entries = chatEmotions[formattedDate] || [];
+    
+    try {
+        const diaries = await getDiaryList(formattedDate); 
+        console.log("[DEBUG] 가져온 일기 목록:", diaries);
+        
+        setDiaryEntries(
+          diaries.map((diary) => ({
+            id: diary._id,
+            emoji: emotionIcons[diary.emotion] || "😐",
+            link: `/diary/${diary._id}`, // 일기 상세 페이지 링크
+            timestamp: diary.date,
+            title: diary.title || "",
+            content: diary.content || "",
+          }))
+        );
+    } catch (error) {
+        console.error(`[ERROR] ${formattedDate} 일기 목록 불러오기 실패:`, error);
+        setDiaryEntries([]);
+    }
+};
 
-    setDiaryEntries(
-      entries.map((emoji, index) => ({
-        id: index,
-        emoji,
-        link: `/diary/${formattedDate}/${index}`,
-        timestamp: formattedDate + " 23:59",
-      }))
-    );
-  };
 
   return (
     <CalendarWrapper>

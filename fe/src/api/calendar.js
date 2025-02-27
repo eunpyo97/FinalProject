@@ -2,7 +2,7 @@ import api from "./config";
 
 /**
  * 특정 채팅방의 종료 상태 조회
- * @param {string} chatroomId - 채팅방 ID
+ * @param {string} chatroomId 
  * @returns {Promise<Object>} - { chatroom_id, conversation_end, emotion }
  */
 export const getChatEndStatus = async (chatroomId) => {
