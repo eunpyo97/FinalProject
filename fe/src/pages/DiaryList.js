@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 
 const DiaryListWrapper = styled.div`
-  margin-top: 20px;
+  margin-top: 50px;
   padding: 15px;
-  width: 80%;
+  width: 90%;
   max-width: 500px;
   background: white;
   border-radius: 10px;
@@ -58,11 +58,11 @@ const DiaryListPage = ({ selectedDate, diaryEntries }) => {
         {diaryEntries.length > 0 ? (
           diaryEntries.map((entry) => (
             <DiaryItem key={entry.id} onClick={() => handleDiaryClick(entry.id)}>
-              {entry.emoji} <span>📖 {entry.timestamp}</span>
+              {entry.emoji} <span>📆 {entry.timestamp}</span>
             </DiaryItem>
           ))
         ) : (
-          <p>일기 없음</p>
+          <p>작성된 일기가 없습니다.</p>
         )}
       </DiaryList>
     </DiaryListWrapper>

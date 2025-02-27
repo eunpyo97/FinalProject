@@ -5,6 +5,7 @@ import styled from "styled-components";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/ko";
+import { getEmotionIcon } from "../components/Emoji";
 
 dayjs.extend(relativeTime);
 dayjs.locale("ko");
@@ -93,15 +94,6 @@ const CreateChatButton = styled.button`
   }
 `;
 
-// 감정 이모지 매핑
-const emotionIcons = {
-  happy: "😄",
-  sadness: "😭",
-  angry: "😡",
-  panic: "😨",
-  default: "😐",
-};
-
 const ChatList = ({ userId, setSelectedChatroom }) => {
   const [chatrooms, setChatrooms] = useState([]);
 
@@ -179,7 +171,7 @@ const ChatList = ({ userId, setSelectedChatroom }) => {
                 alignItems: "center",
               }}
             >
-              <span>{emotionIcons[room.emotion]}</span>
+              <span>{getEmotionIcon(room.emotion)} </span>
               <span style={{ marginLeft: "10px", textAlign: "right" }}>
                 {dayjs(room.timestamp).format("YYYY-MM-DD HH:mm")} /{" "}
                 {formatLastActive(room.updated_at)}{" "}

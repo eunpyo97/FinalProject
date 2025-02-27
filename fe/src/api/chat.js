@@ -45,7 +45,7 @@ export const sendMessageToBot = async (chatroomId, userMessage) => {
     await axios.post("/chat/message", {
       chatroom_id: chatroomId,
       user_message: userMessage,
-      bot_response: " ", 
+      bot_response: " ",
       emotion_id: null,
       confidence: null,
       conversation_end: false,
@@ -76,16 +76,23 @@ export const sendMessageToBot = async (chatroomId, userMessage) => {
   }
 };
 
-// 감정 기반 챗봇 대화
+/* 
+* 감정 기반 챗봇 대화
+* 각 채팅방(chatroomId) 별로 감정 상태를 추적하는 객체
+*/
+let chatroomEmotionStates = {};
+
 export const sendEmotionChatMessage = async (chatroomId, userMessage) => {
   try {
+    // 사용자 메시지와 감정 분석을 함께 전송
     const requestData = {
       chatroom_id: chatroomId,
-      user_message: userMessage || "", 
+      user_message: userMessage || "",
     };
 
     console.log("전송 데이터:", requestData);
 
+    // 감정 분석 요청
     const response = await axios.post("/chat/emotion-chat", requestData);
 
     console.log("서버 응답:", response.data);
@@ -94,35 +101,30 @@ export const sendEmotionChatMessage = async (chatroomId, userMessage) => {
       console.error("감정 분석 실패 또는 감정 데이터 없음.");
     }
 
-    const { bot_response, emotion, confidence, emotion_id, message } = response.data;
+    const {
+      bot_response,
+      emotion = "neutral",
+      confidence = 0.0,
+    } = response.data;
 
-    console.log("응답 메시지:", message);
-    console.log("감정 분석 결과:", emotion);
-    console.log("감정 신뢰도:", confidence);
-    console.log("감정 ID:", emotion_id);
+    // 감정 상태 변경 시, 로컬 상태 업데이트
+    if (chatroomEmotionStates[chatroomId]?.emotion !== emotion) {
+      chatroomEmotionStates[chatroomId] = { emotion, confidence };
+      console.log(`감정 상태 변경: ${emotion}`);
+    }
 
-    // 챗봇 응답 처리 (bot_response가 없다면 기본 메시지 사용)
-    // const botResponse = bot_response || "챗봇 응답을 받을 수 없습니다.";
-
+    // 챗봇 응답 반환
     return {
-      botResponse: bot_response || "챗봇 응답을 받을 수 없습니다.",
-      emotionData: {
-        emotion: emotion ?? "unknown",
-        confidence: confidence ?? 0,
-        emotion_id: emotion_id ?? null,
-      },
+      botResponse: bot_response,
+      emotion,
+      confidence,
     };
   } catch (error) {
-    console.error(
-      "메시지 전송 실패:",
-      error.response ? error.response.data : error.message
-    );
-    return {
-      botResponse: "오류 발생",
-      emotionData: { emotion: "error", confidence: 0, emotion_id: null },
-    };
+    console.error("감정 분석 메시지 전송 실패:", error);
+    throw error;
   }
 };
+
 
 
 // 메시지 삭제

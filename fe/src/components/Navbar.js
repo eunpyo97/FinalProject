@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";  
 import useAuthStore from "../store/authStore";
 import styled from "styled-components";
 
-// 스타일링
 const Nav = styled.nav`
   display: flex;
   align-items: center;
@@ -92,6 +91,7 @@ const SignupLink = styled(Link)`
 const Navbar = () => {
   const { isAuthenticated, logout } = useAuthStore();
   const [scrolled, setScrolled] = useState(false);
+  const navigate = useNavigate();  
 
   // 스크롤 이벤트 핸들러
   useEffect(() => {
@@ -109,6 +109,11 @@ const Navbar = () => {
     };
   }, []);
 
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");  
+  };
+
   return (
     <Nav scrolled={scrolled}>
       <NavContainer>
@@ -125,7 +130,7 @@ const Navbar = () => {
       {/* 오른쪽 메뉴 */}
       {isAuthenticated ? (
         <MenuRight>
-          <StyledButton onClick={logout}>로그아웃</StyledButton>
+          <StyledButton onClick={handleLogout}>로그아웃</StyledButton>
         </MenuRight>
       ) : (
         <MenuRight>
