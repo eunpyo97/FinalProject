@@ -16,7 +16,7 @@ from app.services.chat_service import (
     search_chatrooms,
     modify_message_based_on_emotion,
     modify_response_with_emotion,
-    get_chat_end_status_service
+    get_chat_end_status_service,
 )
 from app.services.rag_service import preview_rag_search
 from app.utils.auth import jwt_required_without_bearer, login_required
@@ -226,16 +226,15 @@ def chat_rag_response():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 @chat_bp.route("/emotion-chat", methods=["POST"])
 @jwt_required_without_bearer
 def chat_with_emotion():
-    """대화 저장 및 RAG 기반 응답 처리 (감정 반영)"""
     try:
         user_id = request.user_id
         if not user_id:
             logging.error("인증된 사용자 ID가 없습니다.")
             return jsonify({"error": "인증이 필요합니다."}), 401
-
         data = request.get_json()
         if not data:
             logging.error("전달된 JSON 데이터가 없습니다.")
@@ -243,11 +242,10 @@ def chat_with_emotion():
 
         # 필수 값 추출 및 검증
         chatroom_id = data.get("chatroom_id")
-        user_message = data.get("user_message", "")  # 빈 문자열로 기본값 설정
+        user_message = data.get("user_message", "")
         emotion_id = data.get("emotion_id", None)
         conversation_end = data.get("conversation_end", False)
 
-        # 필수 값 검증
         if not chatroom_id:
             logging.error("chatroom_id가 누락되었습니다.")
             return jsonify({"error": "chatroom_id가 누락되었습니다."}), 400
@@ -256,14 +254,13 @@ def chat_with_emotion():
             return jsonify({"error": "user_message가 누락되었습니다."}), 400
 
         # 감정 데이터 처리
-        emotion_label = None
-        confidence = None
+        emotion_label = "neutral"  # 기본값 설정
+        confidence = 0.5  # 기본값 설정
         if emotion_id:
-            emotion_data = get_emotion_results(user_id, emotion_id) 
-            if emotion_data:
-                emotion_label = emotion_data.get("emotion", "neutral")  
-                confidence = emotion_data.get("confidence", 0.0)  
-                # 감정에 맞는 사용자 메시지 수정
+            emotion_data = get_emotion_results(chatroom_id, user_id)
+            if emotion_data and emotion_data["most_common"]["emotion"] != "default":
+                emotion_label = emotion_data["most_common"]["emotion"]
+                confidence = emotion_data["most_common"]["confidence"]
                 user_message = modify_message_based_on_emotion(user_message, emotion_label)
 
         # 챗봇 응답 생성
@@ -275,7 +272,7 @@ def chat_with_emotion():
         )
 
         # 감정 반영된 응답 처리 (신뢰도가 0.7 이상인 경우)
-        if emotion_label and confidence and confidence >= 0.7:
+        if emotion_label and confidence >= 0.7:
             bot_response = modify_response_with_emotion(bot_response, emotion_label, confidence)
 
         # 대화 기록 저장
@@ -292,15 +289,13 @@ def chat_with_emotion():
         return jsonify({
             "message": "대화가 저장되었습니다.",
             "bot_response": bot_response,
-            "emotion": emotion_label,
+            "emotion": emotion_label,  # 여기서 감정 레이블을 반환
             "confidence": confidence,
             "emotion_id": emotion_id,
         }), 201
-
     except Exception as e:
         logging.error(f"서버 오류: {e}")
         return jsonify({"error": f"서버 내부 오류: {str(e)}"}), 500
-
 
 
 @chat_bp.route("/chatroom/<chatroom_id>", methods=["DELETE"])

@@ -4,11 +4,12 @@ import "react-calendar/dist/Calendar.css";
 import styled from "styled-components";
 import { getChatEndStatus } from "../api/calendar";
 import { getUserChatHistory } from "../api/chat";
-import { getDiaryList} from "../api/diary"; 
+import { getDiaryList } from "../api/diary";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import DiaryList from "./DiaryList";
+import { RingLoader } from "react-spinners";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -29,6 +30,23 @@ const CalendarWrapper = styled.div`
   }
 `;
 
+const LoadingText = styled.div`
+  margin-top: 20px;
+  font-size: 18px;
+  color: #666;
+  text-align: center;
+`;
+
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+  padding-top: 60px;
+`;
+
 const StyledCalendar = styled(Calendar)`
   border: none;
   border-radius: 20px;
@@ -40,7 +58,6 @@ const StyledCalendar = styled(Calendar)`
   min-height: 535px;
   min-width: 430px;
 
-  /* 해당 월에 속하지 않는 날짜 스타일 */
   .react-calendar__month-view__days__day--neighboringMonth {
     color: rgba(157, 157, 157, 0.31) !important;
     pointer-events: none;
@@ -72,7 +89,6 @@ const StyledCalendar = styled(Calendar)`
     color: white;
   }
 
-  /* 요일 */
   .react-calendar__month-view__weekdays {
     text-align: center;
     font-size: 16px;
@@ -83,7 +99,6 @@ const StyledCalendar = styled(Calendar)`
     margin-bottom: 15px;
   }
 
-  /* 날짜 칸 */
   .react-calendar__tile {
     height: 80px;
     width: 100px;
@@ -125,7 +140,6 @@ const StyledCalendar = styled(Calendar)`
   }
 `;
 
-// 감정 이모지 매핑
 const emotionIcons = {
   happy: "😄",
   sadness: "😭",
@@ -139,17 +153,14 @@ const CalendarPage = () => {
   const [chatEmotions, setChatEmotions] = useState({});
   const [selectedDate, setSelectedDate] = useState(null);
   const [diaryEntries, setDiaryEntries] = useState([]);
+  const [loading, setLoading] = useState(true); // 로딩 상태 추가
 
   useEffect(() => {
     const fetchChatEndStatuses = async () => {
       try {
-        // 사용자 채팅방 목록 불러오기
         const chatrooms = await getUserChatHistory();
         const chatroomIds = chatrooms.map((room) => room.chatroom_id);
 
-        console.log("[DEBUG] 사용자 채팅방 목록:", chatroomIds);
-
-        // 각 채팅방의 종료 상태 확인
         const chatStatusPromises = chatroomIds.map(async (chatroomId) => {
           try {
             const response = await getChatEndStatus(chatroomId);
@@ -164,19 +175,15 @@ const CalendarPage = () => {
         });
 
         const resolvedStatuses = await Promise.all(chatStatusPromises);
-        console.log("[DEBUG] 종료된 채팅방 감정 데이터:", resolvedStatuses);
-
         const emotionsMap = {};
 
         resolvedStatuses.forEach((status) => {
-          // 종료되지 않은 채팅방은 무시
           if (!status || !status.conversation_end) return;
 
           let { conversation_end_timestamp, emotions } = status;
           let representativeEmotion = null;
           let computedTimestamp = conversation_end_timestamp;
 
-          // 감정 데이터가 존재하는 경우
           if (Array.isArray(emotions) && emotions.length > 0) {
             const freq = {};
             let latestTimestamp = emotions[0].timestamp;
@@ -193,7 +200,6 @@ const CalendarPage = () => {
                 representativeEmotion = emotion;
               }
             }
-            // conversation_end_timestamp 없으면 가장 늦은 timestamp 사용
             computedTimestamp = computedTimestamp || latestTimestamp;
           } else {
             representativeEmotion = "default";
@@ -217,13 +223,14 @@ const CalendarPage = () => {
         setChatEmotions(emotionsMap);
       } catch (error) {
         console.error("[ERROR] 감정 캘린더 데이터 불러오기 실패:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchChatEndStatuses();
   }, []);
 
-  // 달력 날짜별 대표 이모지 표시
   const tileContent = ({ date }) => {
     const formattedDate = dayjs(date).tz("Asia/Seoul").format("YYYY-MM-DD");
     const chatEmotionsForDate = chatEmotions[formattedDate];
@@ -242,49 +249,53 @@ const CalendarPage = () => {
       .tz("Asia/Seoul")
       .format("YYYY-MM-DD");
     setSelectedDate(formattedDate);
-    
-    try {
-        const diaries = await getDiaryList(formattedDate); 
-        console.log("[DEBUG] 가져온 일기 목록:", diaries);
-        
-        setDiaryEntries(
-          diaries.map((diary) => ({
-            id: diary._id,
-            emoji: emotionIcons[diary.emotion] || "😐",
-            link: `/diary/${diary._id}`, // 일기 상세 페이지 링크
-            timestamp: diary.date,
-            title: diary.title || "",
-            content: diary.content || "",
-          }))
-        );
-    } catch (error) {
-        console.error(`[ERROR] ${formattedDate} 일기 목록 불러오기 실패:`, error);
-        setDiaryEntries([]);
-    }
-};
 
+    try {
+      const diaries = await getDiaryList(formattedDate);
+      setDiaryEntries(
+        diaries.map((diary) => ({
+          id: diary._id,
+          emoji: emotionIcons[diary.emotion] || "😐",
+          link: `/diary/${diary._id}`,
+          timestamp: diary.date,
+          title: diary.title || "",
+          content: diary.content || "",
+        }))
+      );
+    } catch (error) {
+      console.error(`[ERROR] ${formattedDate} 일기 목록 불러오기 실패:`, error);
+      setDiaryEntries([]);
+    }
+  };
 
   return (
     <CalendarWrapper>
       <h2>😍 감정 캘린더 🥰</h2>
-      <StyledCalendar
-        onChange={setDate}
-        value={date}
-        tileContent={tileContent}
-        locale="ko"
-        calendarType="hebrew"
-        onClickDay={handleDateClick}
-        tileClassName={({ date, view }) => {
-          // 'month' 뷰에서만 적용
-          if (view === "month") {
-            const isCurrentMonth = date.getMonth() === new Date().getMonth(); // 현재 달과 비교
-            return isCurrentMonth
-              ? ""
-              : "react-calendar__month-view__days__day--neighboringMonth";
-          }
-          return "";
-        }}
-      />
+      {/* 로딩 상태일 때만 로딩 스피너와 텍스트 표시 */}
+      {loading ? (
+        <LoadingContainer>
+          <RingLoader color="#5f71f5" loading={loading} size={80} />
+          <LoadingText>달력을 불러오는 중입니다...</LoadingText>
+        </LoadingContainer>
+      ) : (
+        <StyledCalendar
+          onChange={setDate}
+          value={date}
+          tileContent={tileContent}
+          locale="ko"
+          calendarType="hebrew"
+          onClickDay={handleDateClick}
+          tileClassName={({ date, view }) => {
+            if (view === "month") {
+              const isCurrentMonth = date.getMonth() === new Date().getMonth();
+              return isCurrentMonth
+                ? ""
+                : "react-calendar__month-view__days__day--neighboringMonth";
+            }
+            return "";
+          }}
+        />
+      )}
       {selectedDate && (
         <DiaryList selectedDate={selectedDate} diaryEntries={diaryEntries} />
       )}

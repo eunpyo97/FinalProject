@@ -8,7 +8,7 @@ const Nav = styled.nav`
   align-items: center;
   justify-content: space-between;
   padding: 15px 20px;
-  background: #f8f9fa;
+  background:rgb(255, 255, 255);
   top: 0;
   left: 0;
   width: 100%;

@@ -5,7 +5,7 @@ from app.database import mongo
 from app.services.rag_service import retrieve_relevant_documents
 from app.services.llm_service import generate_response
 from app.models.chat import save_chat
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from flask import current_app
 import uuid
 from flask import jsonify
@@ -99,7 +99,6 @@ def end_chatroom(user_id: str, chatroom_id: str) -> dict:
     :return: 종료된 채팅방에 대한 메시지
     """
     try:
-        # 사용자에 맞는 채팅방을 찾기
         chatroom = mongo.db.chatrooms.find_one({"user_id": user_id, "chatroom_id": chatroom_id})
         
         if not chatroom:
@@ -108,7 +107,6 @@ def end_chatroom(user_id: str, chatroom_id: str) -> dict:
         if chatroom.get("conversation_end"):
             return {"message": "이미 종료된 채팅방입니다."}
         
-        # 채팅방 종료 처리
         result = mongo.db.chatrooms.update_one(
             {"chatroom_id": chatroom_id},
             {"$set": {"conversation_end": True}}
@@ -116,7 +114,6 @@ def end_chatroom(user_id: str, chatroom_id: str) -> dict:
         print(f"[DEBUG] update result: {result.modified_count}")
         
         if result.modified_count == 0:
-            # 채팅방이 존재하지 않거나 업데이트되지 않은 경우
             return {"error": f"채팅방 {chatroom_id}을 찾을 수 없습니다."}
         
         return {"message": "채팅방 종료 완료"}
@@ -138,7 +135,6 @@ def get_chat_end_status_service(user_id, chatroom_id):
     :return: 채팅방 종료 상태 및 감정 데이터
     """
     try:
-        # 채팅방 존재 여부 확인
         chatroom = mongo.db.chatrooms.find_one({"chatroom_id": chatroom_id, "user_id": user_id})
 
         if not chatroom:
@@ -161,7 +157,7 @@ def get_chat_end_status_service(user_id, chatroom_id):
             "chatroom_id": chatroom_id,
             "conversation_end": conversation_end,
             "conversation_end_timestamp": conversation_end_timestamp,
-            "emotions": emotion_data["emotions"]  # 항상 리스트 형태로 반환
+            "emotions": emotion_data["emotions"] 
         }, 200
 
     except Exception as e:
@@ -210,14 +206,12 @@ def get_user_chat_history(user_id: str) -> list:
     :return: 사용자의 채팅방 목록
     """
     try:
-        # MongoDB에서 사용자의 채팅방 목록 조회
         chatrooms = list(mongo.db.chatrooms.find({"user_id": user_id}))
         
         if not chatrooms:
             print(f"[DEBUG] 사용자 {user_id}의 기존 채팅방이 없음.")
             return []
 
-        # JSON 변환을 위해 ObjectId 변환 처리
         result = [
             {
                 "chatroom_id": chatroom["chatroom_id"],
@@ -254,6 +248,10 @@ def add_chat(user_id, chatroom_id, user_message, bot_response, emotion_id=None, 
         if not isinstance(chatroom_id, str) or not is_valid_uuid(chatroom_id):
             raise ValueError("유효하지 않은 chatroom_id입니다.")
         
+        # UTC → KST 변환후 tzinfo 유지
+        utc_now = datetime.now(timezone.utc)
+        kst_now = utc_now.astimezone(timezone(timedelta(hours=9))) 
+
         chat_data = {
             "user_id": user_id,
             "user_message": user_message,
@@ -261,10 +259,9 @@ def add_chat(user_id, chatroom_id, user_message, bot_response, emotion_id=None, 
             "emotion_id": emotion_id,
             "confidence": confidence,
             "conversation_end": conversation_end,
-            "timestamp": datetime.now(timezone.utc),
+            "timestamp": kst_now.isoformat(),
         }
         
-        # 채팅방 존재 여부 확인
         existing_chatroom = mongo.db.chatrooms.find_one({"chatroom_id": chatroom_id})
 
         # 채팅방이 없으면 새로운 채팅방 생성
@@ -274,8 +271,8 @@ def add_chat(user_id, chatroom_id, user_message, bot_response, emotion_id=None, 
                 "user_id": user_id,
                 "chatroom_id": chatroom_id,
                 "chats": [chat_data],
-                "created_at": datetime.now(timezone.utc),
-                "updated_at": datetime.now(timezone.utc),
+                "created_at": kst_now.isoformat(),
+                "updated_at": kst_now.isoformat(),
                 "conversation_end": conversation_end
             }
             mongo.db.chatrooms.insert_one(chatroom_data)
@@ -286,7 +283,7 @@ def add_chat(user_id, chatroom_id, user_message, bot_response, emotion_id=None, 
                 {
                     "$push": {"chats": chat_data},
                     "$set": {
-                        "updated_at": datetime.now(timezone.utc),
+                        "updated_at": kst_now.isoformat(),
                         "conversation_end": conversation_end
                     }
                 }
