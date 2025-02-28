@@ -9,6 +9,7 @@ import useDiaryStore from "../store/diaryStore";
 import { predictEmotion } from "../api/emotion";
 import styled from "styled-components";
 import Webcam from "react-webcam";
+import { ClockLoader } from "react-spinners";
 
 // 날짜를 원하는 형식으로 변환하는 함수
 const formatDate = (date) => {
@@ -156,6 +157,10 @@ const EndButton = styled.button`
   border: none;
   border-radius: 5px;
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+`;
+
+const EndButtonText = styled.span`
+  margin-left: 10px;
 `;
 
 const WebcamContainer = styled.div`
@@ -387,13 +392,21 @@ const ChatRoomDetail = ({ userId, chatroomId, setSelectedChatroom }) => {
         </InputContainer>
         {/* 대화 종료하기 버튼 */}
         <EndButtonContainer>
-          <EndButton
-            onClick={handleEndConversation}
-            disabled={conversationEnd || loading}
-          >
-            {loading ? "저장 중..." : "대화 종료하기"}
-          </EndButton>
-        </EndButtonContainer>
+      <EndButton
+        onClick={handleEndConversation}
+        disabled={conversationEnd || loading}
+      >
+        {/* 로딩 중일 때 스피너와 텍스트 함께 표시 */}
+        {loading ? (
+          <>
+            <ClockLoader color="#ffffff" size={20} />
+            <EndButtonText>저장 중...</EndButtonText>
+          </>
+        ) : (
+          "대화 종료하기"
+        )}
+      </EndButton>
+    </EndButtonContainer>
       </ChatBox>
 
       {/* 웹캠 화면 */}

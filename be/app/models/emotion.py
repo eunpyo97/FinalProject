@@ -1,5 +1,5 @@
 from flask_pymongo import PyMongo
-from datetime import datetime
+from datetime import datetime, timezone
 import tensorflow as tf
 import cv2
 import numpy as np
@@ -29,7 +29,7 @@ def save_emotion(mongo, user_id, chatroom_id, emotion, confidence):
                 "emotion_id": emotion_id,
                 "emotion": emotion,
                 "confidence": confidence,
-                "timestamp": datetime.utcnow(),
+                "timestamp": datetime.now(timezone.utc),
             }
         )
         print("감정 데이터 저장 성공!")

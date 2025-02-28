@@ -79,6 +79,25 @@ export const getEmotionResults = async (chatroomId) => {
 
 
 /**
+ * 감정 통계 조회 (주간, 월간)
+ * @param {string} startDate - 조회 시작 날짜 (YYYY-MM-DD)
+ * @param {string} endDate - 조회 종료 날짜 (YYYY-MM-DD)
+ * @returns {Promise<Object>} 감정 통계 데이터 반환
+ */
+export const getEmotionStats = async (startDate, endDate) => {
+  try {
+    const response = await api.get("/emotion/stats", {
+      params: { start_date: startDate, end_date: endDate },
+    });
+    return response.data.stats; 
+  } catch (error) {
+    console.error("감정 통계 조회 오류:", error);
+    return null;
+  }
+};
+
+
+/**
  * 감정 데이터 삭제
  * @param {string} emotionId 
  * @returns {Promise<Object>} 
@@ -148,19 +167,5 @@ export const getMostCommonEmotion = async () => {
   } catch (error) {
     console.error('가장 일반적인 감정 조회 실패:', error);
     throw new Error('가장 일반적인 감정 조회 실패');
-  }
-};
-
-/**
- * 감정 통계 조회
- * @returns {Promise<Object>}
- */
-export const getEmotionStatistics = async () => {
-  try {
-    const response = await api.get('/emotion/statistics');
-    return response.data;  
-  } catch (error) {
-    console.error('감정 통계 조회 실패:', error);
-    throw new Error('감정 통계 조회 실패');
   }
 };
