@@ -8,7 +8,7 @@ const Nav = styled.nav`
   align-items: center;
   justify-content: space-between;
   padding: 15px 20px;
-  background:rgb(255, 255, 255);
+  background:rgb(0, 0, 0);
   top: 0;
   left: 0;
   width: 100%;
@@ -21,8 +21,9 @@ const Logo = styled(Link)`
   font-weight: bold;
   font-size: 20px;
   text-decoration: none;
-  color: black;
-  margin-right: 40px;
+  color: white;
+  margin-left: 15px; 
+  margin-right: 60px;
   &:hover {
     color: rgb(148, 201, 253);
     transform: scale(1.2);
@@ -49,11 +50,12 @@ const MenuRight = styled.div`
 
 const StyledLink = styled(Link)`
   text-decoration: none;
-  color: black;
+  color: white;
+  font-weight: bold;
   font-size: 16px;
   transition: font-size 0.3s ease, color 0.3s ease;
   &:hover {
-    color: rgb(148, 201, 253);
+    color: rgb(143, 199, 255);
     transform: scale(1.1); 
   }
 `;
@@ -61,7 +63,8 @@ const StyledLink = styled(Link)`
 const StyledButton = styled.button`
   all: unset;
   border: none;
-  color: black;
+  color: white;
+  font-weight: bold;
   font-size: 16px;
   cursor: pointer;
   padding: 0;
@@ -79,7 +82,8 @@ const StyledButton = styled.button`
 const SignupLink = styled(Link)`
   margin-right: 20px;
   text-decoration: none;
-  color: black;
+  color: white;
+  font-weight: bold;
   font-size: 16px;
   transition: font-size 0.3s ease, color 0.3s ease;
   &:hover {
@@ -118,7 +122,7 @@ const Navbar = () => {
     <Nav scrolled={scrolled}>
       <NavContainer>
         {/* 왼쪽 로고 */}
-        <Logo to={isAuthenticated ? "/home" : "/"}>RobotPet</Logo>
+        <Logo to={isAuthenticated ? "/home" : "/"}>Emotion Chat</Logo>
         {/* 로그인 후 메뉴 */}
         {isAuthenticated && (
           <MenuLeft>

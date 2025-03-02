@@ -52,7 +52,7 @@ def change_password(user_id, old_password, new_password):
     if not user.check_password(old_password): 
         raise ValueError("기존 비밀번호가 올바르지 않습니다.")
 
-    validate_password(new_password)  # 새 비밀번호 복잡성 체크
+    validate_password(new_password) 
 
     user.set_password(new_password)  
 

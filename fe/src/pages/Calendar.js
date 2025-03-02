@@ -10,6 +10,7 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import DiaryList from "./DiaryList";
 import { RingLoader } from "react-spinners";
+import { useMemo } from "react";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -20,7 +21,7 @@ const CalendarWrapper = styled.div`
   align-items: center;
   justify-content: flex-start;
   min-height: 100vh;
-  background-color: rgb(233, 243, 251);
+  background: linear-gradient(to top, rgb(214, 231, 249), #f0f4f8);
   padding: 20px;
   box-sizing: border-box;
   h2 {
@@ -29,14 +30,12 @@ const CalendarWrapper = styled.div`
     color: rgb(7, 75, 130);
   }
 `;
-
 const LoadingText = styled.div`
   margin-top: 20px;
   font-size: 18px;
   color: #666;
   text-align: center;
 `;
-
 const LoadingContainer = styled.div`
   display: flex;
   justify-content: flex-start;
@@ -46,7 +45,6 @@ const LoadingContainer = styled.div`
   flex-direction: column;
   padding-top: 60px;
 `;
-
 const StyledCalendar = styled(Calendar)`
   border: none;
   border-radius: 20px;
@@ -55,15 +53,16 @@ const StyledCalendar = styled(Calendar)`
   padding: 20px;
   font-size: 15px;
   width: 90%;
-  min-height: 535px;
+  max-width: 800px;
   min-width: 430px;
+  min-height: 535px;
+  margin: 0 auto;
 
   .react-calendar__month-view__days__day--neighboringMonth {
     color: rgba(157, 157, 157, 0.31) !important;
     pointer-events: none;
     background-color: rgb(254, 254, 254) !important;
   }
-
   .react-calendar__navigation {
     background: #90caf9;
     border-radius: 10px;
@@ -72,8 +71,8 @@ const StyledCalendar = styled(Calendar)`
     justify-content: space-between;
     align-items: center;
     min-height: 50px;
+    box-shadow: 0px 10px 15px rgba(0, 0, 0, 0.1);
   }
-
   .react-calendar__navigation button {
     color: white;
     font-weight: bold;
@@ -83,12 +82,10 @@ const StyledCalendar = styled(Calendar)`
     background-color: transparent;
     transition: background 0.3s ease-in-out, color 0.3s ease-in-out;
   }
-
   .react-calendar__navigation button:hover {
     background-color: rgb(11, 104, 180);
     color: white;
   }
-
   .react-calendar__month-view__weekdays {
     text-align: center;
     font-size: 16px;
@@ -97,8 +94,8 @@ const StyledCalendar = styled(Calendar)`
     background-color: rgb(247, 218, 238);
     border-radius: 10px;
     margin-bottom: 15px;
+    box-shadow: 0px 10px 15px rgba(0, 0, 0, 0.1);
   }
-
   .react-calendar__tile {
     height: 80px;
     width: 100px;
@@ -112,20 +109,20 @@ const StyledCalendar = styled(Calendar)`
     padding: 5px;
     background-color: rgb(255, 246, 252);
     position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-
   .react-calendar__tile:hover {
     background: #bbdefb;
-    transform: scale(1.05);
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    transform: scale(1.07) translateY(-3px);
+    color: #03396c;
+    font-weight: bold;
+    box-shadow: 0px 10px 15px rgba(0, 0, 0, 0.2);
   }
-
   .react-calendar__tile--active {
     background: #64b5f6 !important;
     color: white;
     font-weight: bold;
   }
-
   .emotion-icon {
     position: absolute;
     bottom: 5px;
@@ -134,12 +131,10 @@ const StyledCalendar = styled(Calendar)`
     display: flex;
     flex-wrap: wrap;
   }
-
   .emotion-icon span {
     margin: 2px;
   }
 `;
-
 const emotionIcons = {
   happy: "😄",
   sadness: "😭",
@@ -147,17 +142,34 @@ const emotionIcons = {
   panic: "😨",
   default: "😐",
 };
-
 const CalendarPage = () => {
   const [date, setDate] = useState(new Date());
   const [chatEmotions, setChatEmotions] = useState({});
   const [selectedDate, setSelectedDate] = useState(null);
   const [diaryEntries, setDiaryEntries] = useState([]);
-  const [loading, setLoading] = useState(true); // 로딩 상태 추가
+  const [loading, setLoading] = useState(true);
+
+  // 캐시 데이터의 유효성 검사 함수
+  const isCacheValid = (cachedData, maxAge = 60 * 1000) => {
+    if (!cachedData) return false;
+    const { timestamp } = JSON.parse(cachedData);
+    return Date.now() - timestamp < maxAge; // 캐시 유효 시간 (예: 1분)
+  };
 
   useEffect(() => {
     const fetchChatEndStatuses = async () => {
       try {
+        setLoading(true);
+
+        // 캐시 데이터 확인 및 유효성 검사
+        const cachedData = localStorage.getItem("chatEmotions");
+        if (cachedData && isCacheValid(cachedData)) {
+          setChatEmotions(JSON.parse(cachedData).data);
+          setLoading(false);
+          return;
+        }
+
+        // API 호출로 최신 데이터 가져오기
         const chatrooms = await getUserChatHistory();
         const chatroomIds = chatrooms.map((room) => room.chatroom_id);
 
@@ -175,52 +187,25 @@ const CalendarPage = () => {
         });
 
         const resolvedStatuses = await Promise.all(chatStatusPromises);
-        const emotionsMap = {};
 
+        const emotionsMap = {};
         resolvedStatuses.forEach((status) => {
           if (!status || !status.conversation_end) return;
 
-          let { conversation_end_timestamp, emotions } = status;
-          let representativeEmotion = null;
-          let computedTimestamp = conversation_end_timestamp;
+          const formattedDate = processEmotionData(status);
+          if (!formattedDate) return;
 
-          if (Array.isArray(emotions) && emotions.length > 0) {
-            const freq = {};
-            let latestTimestamp = emotions[0].timestamp;
-            emotions.forEach((item) => {
-              freq[item.emotion] = (freq[item.emotion] || 0) + 1;
-              if (dayjs(item.timestamp).isAfter(dayjs(latestTimestamp))) {
-                latestTimestamp = item.timestamp;
-              }
-            });
-            let maxCount = 0;
-            for (const [emotion, count] of Object.entries(freq)) {
-              if (count > maxCount) {
-                maxCount = count;
-                representativeEmotion = emotion;
-              }
-            }
-            computedTimestamp = computedTimestamp || latestTimestamp;
-          } else {
-            representativeEmotion = "default";
-            computedTimestamp = computedTimestamp || new Date().toISOString();
+          const { date, emoji } = formattedDate;
+          if (!emotionsMap[date]) {
+            emotionsMap[date] = [];
           }
-
-          if (!computedTimestamp || !representativeEmotion) return;
-
-          const formattedDate = dayjs(computedTimestamp)
-            .tz("Asia/Seoul")
-            .format("YYYY-MM-DD");
-
-          if (!emotionsMap[formattedDate]) {
-            emotionsMap[formattedDate] = [];
-          }
-
-          const emoji = emotionIcons[representativeEmotion] || "😐";
-          emotionsMap[formattedDate].push(emoji);
+          emotionsMap[date].push(emoji);
         });
 
+        // 상태 업데이트 및 캐싱 (타임스탬프 추가)
+        const dataToCache = { data: emotionsMap, timestamp: Date.now() };
         setChatEmotions(emotionsMap);
+        localStorage.setItem("chatEmotions", JSON.stringify(dataToCache));
       } catch (error) {
         console.error("[ERROR] 감정 캘린더 데이터 불러오기 실패:", error);
       } finally {
@@ -229,27 +214,77 @@ const CalendarPage = () => {
     };
 
     fetchChatEndStatuses();
+
+    // 페이지 포커스 시 데이터 갱신
+    const handleFocus = () => {
+      fetchChatEndStatuses();
+    };
+
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+    };
   }, []);
 
-  const tileContent = ({ date }) => {
-    const formattedDate = dayjs(date).tz("Asia/Seoul").format("YYYY-MM-DD");
-    const chatEmotionsForDate = chatEmotions[formattedDate];
+  const processEmotionData = (status) => {
+    let { conversation_end_timestamp, emotions } = status;
+    let representativeEmotion = null;
+    let computedTimestamp = conversation_end_timestamp;
 
-    return chatEmotionsForDate ? (
-      <span className="emotion-icon">
-        {chatEmotionsForDate.map((emotion, index) => (
-          <span key={index}>{emotion}</span>
-        ))}
-      </span>
-    ) : null;
+    if (Array.isArray(emotions) && emotions.length > 0) {
+      const freq = {};
+      let latestTimestamp = emotions[0].timestamp;
+
+      emotions.forEach((item) => {
+        freq[item.emotion] = (freq[item.emotion] || 0) + 1;
+        if (dayjs(item.timestamp).isAfter(dayjs(latestTimestamp))) {
+          latestTimestamp = item.timestamp;
+        }
+      });
+
+      let maxCount = 0;
+      for (const [emotion, count] of Object.entries(freq)) {
+        if (count > maxCount) {
+          maxCount = count;
+          representativeEmotion = emotion;
+        }
+      }
+
+      computedTimestamp = computedTimestamp || latestTimestamp;
+    } else {
+      representativeEmotion = "default";
+      computedTimestamp = computedTimestamp || new Date().toISOString();
+    }
+
+    if (!computedTimestamp || !representativeEmotion) return null;
+
+    const formattedDate = dayjs(computedTimestamp)
+      .tz("Asia/Seoul")
+      .format("YYYY-MM-DD");
+    const emoji = emotionIcons[representativeEmotion] || "😐";
+    return { date: formattedDate, emoji };
   };
+
+  const tileContent = useMemo(() => {
+    return ({ date }) => {
+      const formattedDate = dayjs(date).tz("Asia/Seoul").format("YYYY-MM-DD");
+      const chatEmotionsForDate = chatEmotions[formattedDate];
+      return chatEmotionsForDate ? (
+        <span className="emotion-icon">
+          {chatEmotionsForDate.map((emotion, index) => (
+            <span key={index}>{emotion}</span>
+          ))}
+        </span>
+      ) : null;
+    };
+  }, [chatEmotions]);
 
   const handleDateClick = async (selectedDate) => {
     const formattedDate = dayjs(selectedDate)
       .tz("Asia/Seoul")
       .format("YYYY-MM-DD");
     setSelectedDate(formattedDate);
-
     try {
       const diaries = await getDiaryList(formattedDate);
       setDiaryEntries(
@@ -285,9 +320,10 @@ const CalendarPage = () => {
           locale="ko"
           calendarType="hebrew"
           onClickDay={handleDateClick}
-          tileClassName={({ date, view }) => {
+          tileClassName={({ date, view, activeStartDate }) => {
             if (view === "month") {
-              const isCurrentMonth = date.getMonth() === new Date().getMonth();
+              const isCurrentMonth =
+                date.getMonth() === activeStartDate.getMonth();
               return isCurrentMonth
                 ? ""
                 : "react-calendar__month-view__days__day--neighboringMonth";

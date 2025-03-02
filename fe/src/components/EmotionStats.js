@@ -28,8 +28,12 @@ const EmotionStats = ({ startDate, endDate }) => {
 
   useEffect(() => {
     if (!startDate || !endDate) return;
+    console.log("[DEBUG] 감정 데이터 요청 startDate:", startDate);
+    console.log("[DEBUG] 감정 데이터 요청 endDate:", endDate);
     const fetchEmotionStats = async () => {
       const stats = await getEmotionStats(startDate, endDate);
+      console.log("[DEBUG] API 응답 데이터:", stats);
+      
       if (stats) setEmotionData(stats);
     };
     fetchEmotionStats();

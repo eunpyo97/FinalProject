@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { getDiaryDetail } from "../api/diary";
 import { getEmotionIcon } from "../components/Emoji";
+import { RingLoader } from "react-spinners"; 
 // import { createGlobalStyle } from "styled-components";
 
 // const GlobalStyle = createGlobalStyle`
@@ -15,11 +16,26 @@ const Container = styled.div`
   align-items: center;
   justify-content: flex-start;
   padding: 30px;
-  background: linear-gradient(to bottom, rgb(222, 237, 252), #ffffff);
+  background: linear-gradient(to top, rgb(222, 237, 252), #ffffff);
   min-height: 100vh;
   width: 100%;
   position: absolute;
   left: 0;
+`;
+
+const LoadingContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh; /* 화면 중앙 정렬 */
+`;
+
+const LoadingText = styled.p`
+  font-size: 18px;
+  color: #555;
+  font-weight: bold;
+  margin-top: 15px;
 `;
 
 const Card = styled.div`
@@ -95,11 +111,29 @@ const EmotionContainer = styled.div`
   align-items: center;
   justify-content: center;
   gap: 10px;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 `;
 
 const EmotionIcon = styled.span`
   font-size: 26px;
+`;
+
+const EditButton = styled.button`
+  background-color: #ffb6c1;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  margin-top: 20px;
+  transition: all 0.3s ease-in-out;
+
+  &:hover {
+    background-color: #ff9aa2;
+    transform: scale(1.05);
+  }
 `;
 
 const DiaryDetail = () => {
@@ -126,13 +160,20 @@ const DiaryDetail = () => {
   }, [id]);
 
   const handleGoBack = () => {
-    navigate(-1);
+    navigate("/calendar");
+  };
+
+  const handleEdit = () => {
+    navigate(`/diary/edit/${id}`);
   };
 
   return (
     <Container>
       {loading ? (
-        <p>불러오는 중...</p>
+        <LoadingContainer>
+        <RingLoader color="#5f71f5" loading={loading} size={80} />
+        <LoadingText>일기를 불러오는 중입니다...</LoadingText>
+      </LoadingContainer>
       ) : error ? (
         <p>{error}</p>
       ) : (
@@ -150,6 +191,7 @@ const DiaryDetail = () => {
           <Content>{diary.content}</Content>
         </Card>
       )}
+      <EditButton onClick={handleEdit}>수정하기</EditButton>
     </Container>
   );
 };

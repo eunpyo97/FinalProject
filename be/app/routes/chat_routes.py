@@ -36,8 +36,7 @@ def create_new_chatroom():
     """새로운 채팅방 생성"""
     user_id = (
         request.user_id
-    )  # jwt_required_without_bearer 데코레이터에서 user_id가 자동으로 추가됨
-
+    )  
     logging.info(f"인증된 사용자 ID: {user_id}")
 
     chatroom_id = create_chatroom(user_id)
@@ -202,7 +201,7 @@ def delete_message(message_id):
 
 @chat_bp.route("/rag-response", methods=["POST"])
 @jwt_required_without_bearer
-@login_required  # 로그인된 사용자만 RAG 응답을 받을 수 있도록 추가
+@login_required  
 def chat_rag_response():
     """
     RAG 기반 상담 챗봇 응답 API

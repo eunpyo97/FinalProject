@@ -1,4 +1,10 @@
 import api from "./config";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 // 대화방 요약 가져오기
 export const getDiarySummary = async (chatroomId) => {
@@ -19,6 +25,12 @@ export const summarizeAndSaveDiary = async (chatroomId) => {
     const response = await api.post("/diary/summary/save", {
       chatroom_id: chatroomId,
     });
+
+    // 백엔드에서 이미 KST 기준으로 날짜를 반환하므로, 추가 변환은 불필요
+    if (response.data.date) {
+      response.data.date = dayjs(response.data.date).format("YYYY-MM-DD HH:mm:ss");
+    }
+
     return response.data;
   } catch (error) {
     console.error("Failed to summarize and save diary", error);
@@ -29,10 +41,15 @@ export const summarizeAndSaveDiary = async (chatroomId) => {
 // 일기 저장 (새 일기 작성)
 export const saveDiary = async (chatroomId, content, date, emotion) => {
   try {
+    // 날짜를 KST 기준으로 변환
+    const kstDate = dayjs(date)
+      .tz("Asia/Seoul")
+      .format("YYYY-MM-DDTHH:mm:ss+09:00");
+
     const response = await api.post("/diary/save", {
       chatroom_id: chatroomId,
       content,
-      date,
+      date: kstDate, // KST 기준 날짜 전달
       emotion,
       summary: null, // 새 일기는 summary 없이 저장
     });
@@ -46,7 +63,8 @@ export const saveDiary = async (chatroomId, content, date, emotion) => {
 // 일기 목록 조회
 export const getDiaryList = async (date) => {
   try {
-    const formattedDate = new Date(date).toISOString().split("T")[0]; // YYYY-MM-DD 형식 변환
+    // 날짜를 KST 기준으로 변환
+    const formattedDate = dayjs(date).tz("Asia/Seoul").format("YYYY-MM-DD");
     console.log(`[DEBUG] 요청 날짜: ${formattedDate}`);
 
     const response = await api.get("/diary/list", {

@@ -25,8 +25,15 @@ export const getChatHistory = async (chatroomId, limit = 10) => {
     if (response.data && Array.isArray(response.data.chats)) {
       const conversationEnd = response.data.conversationEnd || false;
 
+      const formattedChats = response.data.chats.map((chat) => {
+        return {
+          ...chat,
+          timestamp: new Date(chat.timestamp).toLocaleString(), 
+        };
+      });
+
       return {
-        chats: response.data.chats,
+        chats: formattedChats,
         conversationEnd: conversationEnd,
       };
     } else {
@@ -105,7 +112,10 @@ export const sendEmotionChatMessage = async (chatroomId, userMessage) => {
       bot_response,
       emotion = "neutral",
       confidence = 0.0,
+      timestamp, 
     } = response.data;
+
+    const localTimestamp = new Date(timestamp).toLocaleString();
 
     // 감정 상태 변경 시, 로컬 상태 업데이트
     if (chatroomEmotionStates[chatroomId]?.emotion !== emotion) {
@@ -118,13 +128,13 @@ export const sendEmotionChatMessage = async (chatroomId, userMessage) => {
       botResponse: bot_response,
       emotion,
       confidence,
+      timestamp: localTimestamp, 
     };
   } catch (error) {
     console.error("감정 분석 메시지 전송 실패:", error);
     throw error;
   }
 };
-
 
 
 // 메시지 삭제
@@ -167,12 +177,41 @@ export const getUserChatHistory = async () => {
     const response = await axios.get(
       `/chat/history/${localStorage.getItem("user_id")}`
     );
-    return response.data.chatrooms;
+
+    console.log("[DEBUG] 서버 응답 데이터:", response.data.chatrooms); // 디버깅용 로그 추가
+
+    // 날짜 데이터를 변환하여 반환
+    const formattedChatrooms = response.data.chatrooms.map((chatroom) => {
+      console.log("[DEBUG] 변환 전 timestamp:", chatroom.timestamp); // 변환 전 로그
+
+      let formattedTimestamp = "날짜 없음";
+
+      if (chatroom.timestamp) {
+        if (typeof chatroom.timestamp === "string" && chatroom.timestamp.length === 14) {
+          // "20250301072736" -> YYYY-MM-DD HH:mm:ss 변환
+          formattedTimestamp = `${chatroom.timestamp.slice(0, 4)}-${chatroom.timestamp.slice(4, 6)}-${chatroom.timestamp.slice(6, 8)} ${chatroom.timestamp.slice(8, 10)}:${chatroom.timestamp.slice(10, 12)}:${chatroom.timestamp.slice(12, 14)}`;
+        } else {
+          // ISO 형식일 경우 Date 객체 변환
+          formattedTimestamp = new Date(chatroom.timestamp).toLocaleString();
+        }
+      }
+
+      console.log("[DEBUG] 변환 후 timestamp:", formattedTimestamp); // 변환 후 로그
+
+      return {
+        ...chatroom,
+        timestamp: formattedTimestamp,
+      };
+    });
+
+    return formattedChatrooms;
   } catch (error) {
     console.error("사용자 채팅방 조회 실패:", error);
     throw error;
   }
 };
+
+
 
 // 특정 채팅방 삭제
 export const deleteChatroom = async (chatroomId) => {

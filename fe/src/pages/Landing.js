@@ -1,10 +1,25 @@
 import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 
-// 문구 애니메이션
 const fadeIn = keyframes`
   0% { opacity: 0; }
   100% { opacity: 1; }
+`;
+
+const typing = keyframes`
+  from { max-width: 0; }
+  to { max-width: 100%; }
+`;
+
+const colorChange = keyframes`
+  0% { color:rgb(128, 5, 54); }
+  50% { color:rgb(23, 80, 93); }
+  100% { color:rgb(5, 66, 5); }
+`;
+
+const slideIn = keyframes`
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
 `;
 
 const Container = styled.div`
@@ -13,32 +28,32 @@ const Container = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh; /* 화면 전체 높이를 차지하도록 설정 */
-  background-color:rgb(255, 255, 255);
+  height: 100vh;
+  background: linear-gradient(
+    135deg,
+    rgb(255, 177, 208),
+    rgb(184, 247, 250),
+    rgb(217, 191, 255)
+  );
   overflow: hidden;
 `;
 
 const SliderContainer = styled.div`
-  width: 80%; /* 기본 너비 */
-  height: 60%; /* 기본 높이 */
-  max-width: 800px; /* 최대 너비 제한 */
-  max-height: 600px; /* 최대 높이 제한 */
+  width: 80%;
+  height: 60%;
+  max-width: 800px;
+  max-height: 600px;
   position: relative;
-  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0px 10px 15px rgba(0, 0, 0, 0.1);
-  margin-top: 25%; /* 기본값 */
-
+  margin-top: 20%;
   @media (max-width: 768px) {
-    margin-top: 40%; /* 작은 화면에서는 이미지를 더 아래로 이동 */
+    margin-top: 20%;
   }
-
   @media (min-width: 768px) and (max-width: 1024px) {
-    margin-top: 30%; /* 태블릿 화면에서 이미지 위치 조정 */
+    margin-top: 20%;
   }
-
   @media (min-width: 1024px) {
-    margin-top: 25%; /* 큰 화면(PC)에서 이미지 위치 조정 */
+    margin-top: 20%;
   }
 `;
 
@@ -48,71 +63,73 @@ const Slide = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background-size: contain; /* 이미지가 잘리지 않도록 설정 */
-  background-repeat: no-repeat; /* 반복 방지 */
-  background-position: center; /* 중앙 정렬 */
-  transition: opacity 1s ease-in-out;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  animation: ${slideIn} 1s ease-out, ${fadeIn} 1s ease-out;
   opacity: ${({ isVisible }) => (isVisible ? 1 : 0)};
-  animation: ${fadeIn} 1s ease-out;
+  transform: ${({ isVisible }) =>
+    isVisible ? "translateX(0)" : "translateX(100%)"};
+  transition: opacity 1s ease-in-out, transform 1s ease-in-out;
 `;
 
 const TextContainer = styled.div`
   position: absolute;
-  top: 15%; /* 기본값 */
+  top: 10%;
   left: 50%;
   transform: translateX(-50%);
   color: white;
   text-align: center;
   width: 90%;
   z-index: 2;
-
   @media (max-width: 768px) {
-    top: 10%; /* 작은 화면에서는 조금 더 위로 이동 */
+    top: 8%;
   }
-
   @media (min-width: 768px) and (max-width: 1024px) {
-    top: 12%; /* 태블릿 화면에서 텍스트 위치 조정 */
+    top: 10%;
   }
-
   @media (min-width: 1024px) {
-    top: 25%; /* 큰 화면(PC)에서 텍스트 위치 조정 */
+    top: 14%;
   }
 `;
 
 const HeadingText = styled.h1`
-  font-size: 36px; /* 기본 글씨 크기 */
+  font-size: 36px;
   font-weight: bold;
-  margin-bottom: 10px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-
+  margin: 0 auto;
+  text-align: center;
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  animation: ${typing} 3s steps(30, end), ${colorChange} 5s infinite;
+  border-right: 2px solid white;
+  max-width: fit-content;
   @media (max-width: 768px) {
-    font-size: 28px; /* 작은 화면에서는 글씨 크기 줄임 */
+    font-size: 28px;
   }
-
   @media (min-width: 768px) and (max-width: 1024px) {
-    font-size: 32px; /* 태블릿 화면에서 글씨 크기 조정 */
+    font-size: 32px;
   }
-
   @media (min-width: 1024px) {
-    font-size: 36px; /* 큰 화면(PC)에서 글씨 크기 유지 */
+    font-size: 36px;
   }
 `;
 
 const DescriptionText = styled.p`
-  font-size: 20px; /* 기본 글씨 크기 */
+  font-size: 20px;
   line-height: 1.5;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-
+  white-space: pre-line;
+  margin-top: 13px;
+  animation: ${colorChange} 5s infinite;
   @media (max-width: 768px) {
-    font-size: 16px; /* 작은 화면에서는 글씨 크기 줄임 */
+    font-size: 16px;
   }
-
   @media (min-width: 768px) and (max-width: 1024px) {
-    font-size: 18px; /* 태블릿 화면에서 글씨 크기 조정 */
+    font-size: 18px;
   }
-
   @media (min-width: 1024px) {
-    font-size: 20px; /* 큰 화면(PC)에서 글씨 크기 유지 */
+    font-size: 20px;
   }
 `;
 
@@ -120,26 +137,26 @@ const phrases = [
   {
     heading: "감정 캘린더",
     description:
-      "감정 캘린더로 일상의 감정을 기록해 보세요. 언제, 어디서나 감정 변화를 쉽게 파악하고, 스스로의 마음을 돌아볼 수 있습니다.",
-    bgImage: "/assets/calendar.jpg",
+      "감정 캘린더로 일상의 감정을 기록해 보세요. \n언제, 어디서나 감정 변화를 쉽게 파악하고, 스스로의 마음을 돌아볼 수 있습니다.",
+    bgImage: "/assets/calendar2.jpg",
   },
   {
-    heading: "친구처럼 대화하는 챗봇!",
+    heading: "친구처럼 대화하는 감정을 읽는 챗봇",
     description:
-      "혼자 있을 때, 챗봇이 항상 곁에 있습니다. 고민을 털어놓고, 지친 마음을 풀어보세요. 언제든지 대화가 기다리고 있어요.",
-    bgImage: "/assets/chatbot.jpg",
+      "고민을 털어놓고, 지친 마음을 풀어보세요. \n웹캠을 통해 실시간으로 감정을 분석하고, 그에 맞는 따뜻한 대화를 제공합니다. \n언제든지 당신의 감정에 맞춘 대화가 기다리고 있어요.",
+    bgImage: "/assets/chatbot2.jpg",
   },
   {
     heading: "당신의 하루를 기록하는 일기장",
     description:
-      "매일매일의 생각과 감정을 일기장에 담아보세요. 소중한 순간들이 기록되고, 나만의 이야기가 만들어집니다.",
-    bgImage: "/assets/diary.jpg",
+      "매일매일의 생각과 감정을 일기장에 담아보세요. \n소중한 순간들이 기록되고, 나만의 이야기가 만들어집니다.",
+    bgImage: "/assets/diary2.jpg",
   },
   {
     heading: "나의 감정을 시각적으로 확인하세요!",
     description:
-      "감정 그래프를 통해 일상의 감정 흐름을 시각적으로 분석해보세요. 나의 감정 패턴을 알면 더 나은 선택을 할 수 있습니다.",
-    bgImage: "/assets/graph.jpg",
+      "감정 그래프를 통해 일상의 감정 흐름을 시각적으로 분석해보세요. \n나의 감정 패턴을 알면 더 나은 선택을 할 수 있습니다.",
+    bgImage: "/assets/graph2.jpg",
   },
 ];
 
@@ -149,19 +166,18 @@ const Landing = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % phrases.length);
-    }, 3000); // 3초마다 슬라이드 전환
+    }, 4000);
     return () => clearInterval(interval);
   }, []);
 
   return (
     <Container>
-      {/* 문구 */}
       <TextContainer>
-        <HeadingText>{phrases[currentIndex].heading}</HeadingText>
+        <HeadingText key={currentIndex}>
+          {phrases[currentIndex].heading}
+        </HeadingText>
         <DescriptionText>{phrases[currentIndex].description}</DescriptionText>
       </TextContainer>
-
-      {/* 이미지 슬라이더 */}
       <SliderContainer>
         {phrases.map((phrase, index) => (
           <Slide

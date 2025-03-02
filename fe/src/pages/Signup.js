@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { signup, verifyEmailRequest, verifyEmail } from "../api/auth";
 // import api from '../api/config';
 import styled from "styled-components";
-import Button from "../components/Button";
 import ErrorMessage from "../components/ErrorMessage";
 import { validatePassword, checkPasswordMatch } from "../utils/validation";
 import Spinner from "../components/Spinner";
@@ -14,11 +13,16 @@ const Container = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 60vh;
+  height: 75vh;
 `;
 
 const Title = styled.h2`
-  margin-bottom: 50px;
+  margin-bottom: 40px;
+  font-size: 30px;
+  font-weight: bold;
+  color: rgb(3, 69, 135);
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2), 4px 4px 0px rgba(0, 0, 0, 0.15);
+  letter-spacing: 1px;
 `;
 
 const FormContainer = styled.div`
@@ -42,32 +46,140 @@ const EmailContainer = styled.div`
 `;
 
 const Input = styled.input`
-  width: 250px;
+  width: 260px;
+  height: 45px;
   padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  box-sizing: border-box;
+  border: 1px solid rgba(199, 229, 248, 0.5);
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.3s ease-in-out;
+  box-shadow: inset 0px 2px 5px rgba(0, 0, 0, 0.05);
+
+  &:hover {
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
+    transform: scale(1.02);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #3498db;
+    background: white;
+    box-shadow: 0px 0px 10px rgba(52, 152, 219, 0.5);
+    transform: scale(1.03);
+  }
 `;
 
 const EmailInput = styled(Input)`
-  height: 40px;
+  width: 260px;
+  height: 45px;
+  transition: all 0.3s ease-in-out;
+  box-shadow: inset 0px 2px 5px rgba(0, 0, 0, 0.05);
+
+  &:hover {
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
+    transform: scale(1.02);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #3498db;
+    background: white;
+    box-shadow: 0px 0px 10px rgba(52, 152, 219, 0.5);
+    transform: scale(1.03);
+  }
 `;
 
-const EmailButton = styled(Button)`
-  height: 40px;
+const EmailButton = styled.button`
+  height: 45px;
   padding: 0 20px;
   white-space: nowrap;
   flex-shrink: 0;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(to right, #3498db, #2980b9);
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+
+  &:hover {
+    background: linear-gradient(to right, #2980b9, #217dbb);
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  &:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
 `;
 
 const SignupButtonWrapper = styled.div`
-  width: 100%;
   display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
 `;
 
-const SignupButton = styled(Button)`
-  width: 250px;
-  margin-top: 20px;
+const SignupButton = styled.button`
+  width: 260px;
+  height: 45px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(to right, #3498db, #2980b9);
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+
+  &:hover {
+    background: linear-gradient(to right, #2980b9, #217dbb);
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.98);
+    box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.2);
+  }
+
+  &:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.7;
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 150%;
+    height: 150%;
+    background: rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease-in-out;
+    transform: translate(-50%, -50%) scale(0);
+    border-radius: 50%;
+  }
+
+  &:hover::before {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
 `;
 
 const PasswordValidationText = styled.p`
