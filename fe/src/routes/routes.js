@@ -13,6 +13,7 @@ import ChatSettings from "../pages/ChatSettings";
 import Calendar from "../pages/Calendar";
 import DiaryList from "../pages/DiaryList";
 import DiaryDetail from "../pages/DiaryDetail";
+import EditDiary from "../pages/EditDiary";
 
 const AppRoutes = () => {
   return (
@@ -33,6 +34,7 @@ const AppRoutes = () => {
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/diary" element={<DiaryList />} />
         <Route path="/diary/:id" element={<DiaryDetail />} />
+        <Route path="/diary/edit/:diaryId" element={<EditDiary />} />
       </Route>
     </Routes>
   );

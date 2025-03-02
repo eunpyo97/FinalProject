@@ -61,7 +61,7 @@ const EmotionBar = ({ startDate, endDate }) => {
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis type="number" />
           <YAxis dataKey="emotion" type="category" tickFormatter={(value) => `${getEmotionIcon(value)} ${value}`} />
-          <Tooltip />
+          <Tooltip cursor={{ fill: "rgba(253, 111, 159, 0.3)" }} /> 
           <Bar dataKey="count" barSize={30}>
             {emotionData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[entry.emotion] || "#d3d3d3"} />

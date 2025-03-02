@@ -14,7 +14,7 @@ const Container = styled.div`
   justify-content: flex-start;
   min-height: 100vh;
   padding: 80px 20px 20px;
-  background: linear-gradient(to right,rgb(249, 255, 187),rgb(255, 213, 235)); 
+  background: linear-gradient(to right, rgb(249, 255, 187), rgb(255, 213, 235));
 `;
 
 const DateContainer = styled.div`
@@ -70,9 +70,16 @@ const Home = () => {
     const today = new Date();
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(today.getDate() - 6);
+    
+    const formatDate = (date) => {
+      return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+        .toISOString()
+        .split("T")[0];
+    };
+  
     return {
-      startDate: sevenDaysAgo.toISOString().split("T")[0],
-      endDate: today.toISOString().split("T")[0],
+      startDate: formatDate(sevenDaysAgo),
+      endDate: formatDate(today, true),
     };
   });
 
@@ -112,7 +119,7 @@ const Home = () => {
       {/* <ChartWrapper>
         <EmotionPlot startDate={dates.startDate} endDate={dates.endDate} />
       </ChartWrapper> */}
-      
+
       {/* 감정 스트림 */}
       {/* <ChartWrapper>
         <EmotionStream startDate={dates.startDate} endDate={dates.endDate} />

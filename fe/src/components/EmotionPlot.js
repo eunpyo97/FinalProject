@@ -1,8 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { getEmotionStats } from "../api/emotion";
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import {
+  ScatterChart,
+  Scatter,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 import styled from "styled-components";
-import { getEmotionIcon } from "../components/Emoji"; 
+import { getEmotionIcon } from "../components/Emoji";
 
 const ChartContainer = styled.div`
   width: 100%;
@@ -38,7 +47,14 @@ const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const { date, emotion, confidence } = payload[0].payload;
     return (
-      <div style={{ backgroundColor: "#fff", padding: "8px", borderRadius: "8px", boxShadow: "0px 0px 8px rgba(0,0,0,0.2)" }}>
+      <div
+        style={{
+          backgroundColor: "#ffff",
+          padding: "8px",
+          borderRadius: "8px",
+          boxShadow: "0px 0px 8px rgba(0,0,0,0.2)",
+        }}
+      >
         <p style={{ margin: 0, fontSize: "14px", fontWeight: "bold" }}>
           <span style={{ marginRight: "5px" }}>{getEmotionIcon(emotion)}</span>
           {emotion}: <strong>{confidence}%</strong> ({date})
@@ -57,15 +73,24 @@ const EmotionPlot = ({ startDate, endDate }) => {
       if (!startDate || !endDate) return;
       const stats = await getEmotionStats(startDate, endDate);
       if (stats) {
-        let formattedData = stats.trend.map(({ date, emotion, confidence }) => ({
-          date,
-          emotion,
-          confidence: Math.round(confidence * 100),
-          icon: getEmotionIcon(emotion),
-        }));
+        let formattedData = stats.trend.map(
+          ({ date, emotion, confidence }) => ({
+            date,
+            emotion,
+            confidence: Math.round(confidence * 100),
+            icon: getEmotionIcon(emotion),
+          })
+        );
 
         if (formattedData.length === 0) {
-          formattedData = [{ date: startDate, emotion: "neutral", confidence: 100, icon: "😐" }];
+          formattedData = [
+            {
+              date: startDate,
+              emotion: "neutral",
+              confidence: 100,
+              icon: "😐",
+            },
+          ];
         }
 
         setEmotionData(formattedData);
@@ -85,7 +110,9 @@ const EmotionPlot = ({ startDate, endDate }) => {
 
   return (
     <ChartContainer>
-      <h3 style={{ fontSize: "20px", marginBottom: "15px" }}>나의 감정의 흐름은?</h3>
+      <h3 style={{ fontSize: "20px", marginBottom: "15px" }}>
+        나의 감정의 흐름은?
+      </h3>
 
       {emotionData.length === 1 && emotionData[0].emotion === "neutral" && (
         <p>선택한 날짜에 대화를 나누지 않았나 봐요. 감정 데이터가 없어요 😥</p>
@@ -96,7 +123,10 @@ const EmotionPlot = ({ startDate, endDate }) => {
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="date" type="category" />
           <YAxis dataKey="confidence" type="number" domain={[0, 100]} />
-          <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: "3 3" }} />
+          <Tooltip
+            content={<CustomTooltip />}
+            cursor={{ strokeDasharray: "3 3" }}
+          />
 
           {Object.keys(COLORS).map((emotion) => (
             <Scatter

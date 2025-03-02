@@ -21,6 +21,20 @@ const formatDate = (date) => {
   return `${year}-${month}-${day} ${hours}:${minutes}`;
 };
 
+const ChatRoomWrapper = styled.div`
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding-top: 40px;
+  background: linear-gradient(to top, rgb(213, 230, 249), #f0f4f8);
+  background-size: cover;
+  box-sizing: border-box;
+  overflow-y: hidden;
+`;
+
 const ChatBox = styled.div`
   width: 100%;
   max-width: 430px;
@@ -38,15 +52,39 @@ const ChatHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: rgb(176, 213, 255);
+  background: linear-gradient(120deg, rgb(106, 159, 251), rgb(205, 98, 250));
   padding: 15px;
   font-size: 25px;
   font-weight: bold;
   color: white;
-  border-bottom: 4px solid #ffffff;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  border-bottom: 4px solid rgba(255, 255, 255, 0.5);
   border-radius: 15px 15px 0 0;
   width: 100%;
-  transition: transform 0.3s ease;
+  position: relative;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+`;
+
+const BackButton = styled.button`
+  background-color: rgb(212, 223, 248);
+  color: rgb(106, 14, 255);
+  font-size: 16px;
+  font-weight: bold;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+
+  &:hover {
+    background-color: rgba(249, 227, 252, 0.44);
+    transform: scale(1.05);
+  }
+
+  &:active {
+    background-color: rgba(249, 227, 252, 0.67);
+    transform: scale(0.95);
+  }
 `;
 
 const ChatHistory = styled.div`
@@ -188,6 +226,42 @@ const WebcamContainer = styled.div`
   }
 `;
 
+const EmotionStatusContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: fit-content;
+  margin-bottom: 50px;
+`;
+
+const LoadingOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5); 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; 
+  visibility: ${({ visible }) => (visible ? "visible" : "hidden")};
+  opacity: ${({ visible }) => (visible ? 1 : 0)};
+  transition: visibility 0.3s ease, opacity 0.3s ease;
+`;
+
+const LoadingSpinnerContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+`;
+
+
 const ChatRoomDetail = ({ userId, chatroomId, setSelectedChatroom }) => {
   const webcamRef = useRef(null);
   const { emotion, confidence, setEmotion } = useEmotionStore();
@@ -196,9 +270,10 @@ const ChatRoomDetail = ({ userId, chatroomId, setSelectedChatroom }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [conversationEnd, setConversationEnd] = useState(false);
-  const [previousEmotion, setPreviousEmotion] = useState(null);
-  const [previousConfidence, setPreviousConfidence] = useState(null);
   const [lastUserMessageTime, setLastUserMessageTime] = useState(null);
+
+  const prevEmotionRef = useRef(null);
+  const prevConfidenceRef = useRef(null);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -210,12 +285,17 @@ const ChatRoomDetail = ({ userId, chatroomId, setSelectedChatroom }) => {
         setMessages(chats);
         setConversationEnd(endStatus);
 
-        // 채팅 내역이 비어 있을 경우 백엔드에 초기 메시지 요청
-        if (chats.length === 0 && emotion && !conversationEnd) {
-          const { botResponse } = await sendEmotionChatMessage(chatroomId, "");
+        // 채팅 내역이 비어 있을 경우, 첫 메시지를 전송 (첫 메시지는 감정 반영할 수도, 아닐 수도 있음)
+        if (chats.length === 0 && !conversationEnd) {
+          const { botResponse, isEmotionApplied } =
+            await sendEmotionChatMessage(chatroomId, "");
           setMessages((prev) => [
             ...prev,
-            { user_message: null, bot_response: botResponse },
+            {
+              user_message: null,
+              bot_response: botResponse,
+              emotionApplied: isEmotionApplied,
+            },
           ]);
         }
       } catch (error) {
@@ -235,38 +315,47 @@ const ChatRoomDetail = ({ userId, chatroomId, setSelectedChatroom }) => {
         const result = await predictEmotion(imageSrc, userId, chatroomId);
         const { emotion: newEmotion, confidence: newConfidence } = result;
 
-        // 감정이 변했거나 신뢰도 차이가 0.2 이상일 경우
-        if (
-          newEmotion !== previousEmotion ||
-          Math.abs(previousConfidence - newConfidence) >= 0.2
-        ) {
-          setEmotion(newEmotion, newConfidence);
-          setPreviousEmotion(newEmotion);
-          setPreviousConfidence(newConfidence);
+        // 화면에는 5초마다 감정 분석 결과(감정, 신뢰도)를 그대로 표시 (neutral이라도 표시)
+        setEmotion(newEmotion, newConfidence);
 
-          // 사용자가 마지막으로 응답한 이후 일정 시간이 지났는지 확인 (5초)
-          const now = Date.now();
-          const userRespondedRecently =
-            lastUserMessageTime && now - lastUserMessageTime < 5000;
-
-          // 감정이 변했을 때 챗봇이 말을 걸도록
-          // 감정이 변하더라도 신뢰도가 0.7 미만이면 챗봇이 말을 걸지 않음
-          // 사용자가 응답하지 않은 경우, 같은 감정이면 챗봇이 말을 걸지 않음
-          if (!conversationEnd && newConfidence >= 0.7) {
-            if (!userRespondedRecently && newEmotion === previousEmotion)
-              return;
-
-            // 챗봇 응답
-            const { botResponse } = await sendEmotionChatMessage(
-              chatroomId,
-              ""
-            );
-            setMessages((prev) => [
-              ...prev,
-              { user_message: null, bot_response: botResponse },
-            ]);
+        // 감정 변화 판단
+        // - 신뢰도 0.7 이상일 때만 감정 변화 고려
+        // - 기본 메시지(감정 인식 없음) 이후 첫 감정 인식에서는 prevEmotionRef가 null이므로 무조건 메시지 전송
+        // - 그 외, 다른 감정이면 메시지 전송, 같은 감정이면 이전 신뢰도 대비 0.2 이상 상승했을 때만 메시지 전송
+        let emotionChanged = false;
+        if (newConfidence >= 0.7) {
+          if (prevEmotionRef.current === null) {
+            // 기본 메시지 이후 첫 감정 인식: 무조건 메시지 전송
+            emotionChanged = true;
+          } else if (newEmotion !== prevEmotionRef.current) {
+            emotionChanged = true;
+          } else if (
+            newEmotion === prevEmotionRef.current &&
+            prevConfidenceRef.current !== null &&
+            newConfidence > prevConfidenceRef.current + 0.2
+          ) {
+            emotionChanged = true;
           }
         }
+
+        // 메시지 전송 로직
+        // 추가 메시지는 신뢰도 0.7 이상이며 감정 변화가 감지된 경우에만 전송됨
+        if (newConfidence >= 0.7 && emotionChanged) {
+          const response = await sendEmotionChatMessage(chatroomId, "");
+          const botMessage = response.emotionResponse;
+          setMessages((prev) => [
+            ...prev,
+            {
+              user_message: null,
+              bot_response: botMessage,
+              emotionApplied: true,
+            },
+          ]);
+        }
+
+        // 이전 감정 및 신뢰도 업데이트
+        prevEmotionRef.current = newEmotion;
+        prevConfidenceRef.current = newConfidence;
       } catch (error) {
         console.error("감정 인식 실패:", error);
       }
@@ -277,11 +366,10 @@ const ChatRoomDetail = ({ userId, chatroomId, setSelectedChatroom }) => {
     chatroomId,
     emotion,
     setEmotion,
-    previousEmotion,
-    previousConfidence,
     loading,
     conversationEnd,
     lastUserMessageTime,
+    messages,
   ]);
 
   // 사용자 메시지 전송 함수
@@ -342,73 +430,85 @@ const ChatRoomDetail = ({ userId, chatroomId, setSelectedChatroom }) => {
   const formattedDate = formatDate(chatroomDate);
 
   return (
-    <div>
-      <ChatBox>
-        <ChatHeader>
-          <button onClick={() => setSelectedChatroom(null)}>← 뒤로</button>
-          <span style={{ marginLeft: "55px" }}>내 친구</span>
-          <span style={{ fontSize: "15px" }}>{formattedDate}</span>
-        </ChatHeader>
-        <ChatHistory>
-          {messages.length > 0 ? (
-            messages.map((msg, index) => (
-              <React.Fragment key={index}>
-                {msg.user_message && (
-                  <MessageContainer isUser={true}>
-                    <MessageBubble isUser={true}>
-                      {msg.user_message}
-                    </MessageBubble>
-                  </MessageContainer>
-                )}
-                {msg.bot_response && (
-                  <MessageContainer isUser={false}>
-                    <MessageBubble isUser={false}>
-                      {msg.bot_response}
-                    </MessageBubble>
-                  </MessageContainer>
-                )}
-              </React.Fragment>
-            ))
-          ) : (
-            <p>채팅 내역이 없습니다.</p>
-          )}
-        </ChatHistory>
-        <InputContainer>
-          <Input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={
-              conversationEnd
-                ? "대화가 종료되었습니다"
-                : "메시지를 입력하세요..."
-            }
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            disabled={conversationEnd}
-          />
-          <Button onClick={sendMessage} disabled={conversationEnd}>
-            전송
-          </Button>
-        </InputContainer>
-        {/* 대화 종료하기 버튼 */}
-        <EndButtonContainer>
-      <EndButton
-        onClick={handleEndConversation}
-        disabled={conversationEnd || loading}
-      >
-        {/* 로딩 중일 때 스피너와 텍스트 함께 표시 */}
-        {loading ? (
-          <>
-            <ClockLoader color="#ffffff" size={20} />
-            <EndButtonText>저장 중...</EndButtonText>
-          </>
-        ) : (
-          "대화 종료하기"
-        )}
-      </EndButton>
-    </EndButtonContainer>
-      </ChatBox>
-
+    <>
+      {/* 로딩 중일 때 어두운 오버레이 */}
+      <LoadingOverlay visible={loading}>
+        <LoadingSpinnerContainer>
+          <ClockLoader color="#ffffff" size={50} />
+          <div style={{ marginTop: "20px" }}>저장 중...</div>
+        </LoadingSpinnerContainer>
+      </LoadingOverlay>
+  
+      <ChatRoomWrapper>
+        <ChatBox>
+          <ChatHeader>
+            <BackButton onClick={() => setSelectedChatroom(null)}>
+              ← 뒤로
+            </BackButton>
+            <span style={{ marginLeft: "55px" }}>내 친구</span>
+            <span style={{ fontSize: "15px" }}>{formattedDate}</span>
+          </ChatHeader>
+          <ChatHistory>
+            {messages.length > 0 ? (
+              messages.map((msg, index) => (
+                <React.Fragment key={index}>
+                  {msg.user_message && (
+                    <MessageContainer isUser={true}>
+                      <MessageBubble isUser={true}>
+                        {msg.user_message}
+                      </MessageBubble>
+                    </MessageContainer>
+                  )}
+                  {msg.bot_response && (
+                    <MessageContainer isUser={false}>
+                      <MessageBubble isUser={false}>
+                        {msg.bot_response}
+                      </MessageBubble>
+                    </MessageContainer>
+                  )}
+                </React.Fragment>
+              ))
+            ) : (
+              <p>채팅 내역이 없습니다.</p>
+            )}
+          </ChatHistory>
+          <InputContainer>
+            <Input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={
+                conversationEnd
+                  ? "대화가 종료되었습니다"
+                  : "메시지를 입력하세요..."
+              }
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              disabled={conversationEnd}
+            />
+            <Button onClick={sendMessage} disabled={conversationEnd}>
+              전송
+            </Button>
+          </InputContainer>
+          {/* 대화 종료하기 버튼 */}
+          <EndButtonContainer>
+            <EndButton
+              onClick={handleEndConversation}
+              disabled={conversationEnd || loading}
+            >
+              {/* 로딩 중일 때 스피너와 텍스트 함께 표시 */}
+              {loading ? (
+                <>
+                  <ClockLoader color="#ffffff" size={20} />
+                  <EndButtonText>저장 중...</EndButtonText>
+                </>
+              ) : (
+                "대화 종료하기"
+              )}
+            </EndButton>
+          </EndButtonContainer>
+        </ChatBox>
+      </ChatRoomWrapper>
+  
       {/* 웹캠 화면 */}
       {!conversationEnd && (
         <WebcamContainer>
@@ -425,19 +525,18 @@ const ChatRoomDetail = ({ userId, chatroomId, setSelectedChatroom }) => {
           />
         </WebcamContainer>
       )}
-
+  
       {/* 감정 상태 표시 */}
       {emotion && !conversationEnd && (
-        <div>
+        <EmotionStatusContainer>
           <p style={{ fontSize: "18px", fontWeight: "bold" }}>
             현재 감정: {emotion}
           </p>
           <p>신뢰도: {confidence}%</p>
-          {/* <p>신뢰도: {(confidence * 100).toFixed(2)}%</p> */}
-        </div>
+        </EmotionStatusContainer>
       )}
-    </div>
+    </>
   );
-};
-
-export default ChatRoomDetail;
+  };
+  
+  export default ChatRoomDetail;

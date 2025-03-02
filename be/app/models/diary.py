@@ -1,10 +1,13 @@
 from bson.errors import InvalidId
-from datetime import datetime, timezone
+from datetime import datetime
+import pytz
 from flask_pymongo import PyMongo
 from flask import Flask
 from bson.objectid import ObjectId
 
 mongo = PyMongo()
+
+KST = pytz.timezone("Asia/Seoul")
 
 class Diary:
     def __init__(
@@ -27,13 +30,13 @@ class Diary:
         self.emotion = emotion
         self.title = title
         self.tag = tag
-        self.created_at = created_at or datetime.now(timezone.utc)
+        self.created_at = created_at or datetime.now(KST)  
         self.updated_at = updated_at
         self.summary = summary
 
     def to_dict(self):
         """
-        Diary 객체를 딕셔너리로 변환 (MongoDB 저장용)
+        Diary 객체를 딕셔너리로 변환
         """
         return {
             "user_id": self.user_id,
@@ -43,7 +46,7 @@ class Diary:
             "emotion": self.emotion,
             "title": self.title,
             "tag": self.tag,
-            "created_at": self.created_at,
+            "created_at": self.created_at,  
             "updated_at": self.updated_at,
             "summary": self.summary,
         }
@@ -61,7 +64,7 @@ class Diary:
             emotion=data["emotion"],
             title=data.get("title", None),
             tag=data.get("tag", None),
-            created_at=data.get("created_at", datetime.now(timezone.utc)),
+            created_at=data.get("created_at", datetime.now(KST)),  
             updated_at=data.get("updated_at", None),
             summary=data.get("summary", None),
         )
@@ -74,7 +77,7 @@ class Diary:
         """
         if isinstance(diary_data, Diary):
             diary_data = diary_data.to_dict()
-        diary_data["created_at"] = datetime.now(timezone.utc)
+        diary_data["created_at"] = datetime.now(KST) 
 
         result = mongo.db.diaries.insert_one(diary_data)
         return str(result.inserted_id)
@@ -84,7 +87,8 @@ class Diary:
         """
         특정 사용자의 날짜별 일기 목록 조회
         :param user_id: 사용자 ID
-        :param date: 날짜 (ISO 형식, 예: '2023-02-01')
+        :param date: 날짜 (예: '2023-02-01', 문자열)
+        :return: 해당 날짜의 일기 목록 (리스트)
         """
         diaries = mongo.db.diaries.find({"user_id": user_id, "date": date})
         return [{**diary, "_id": str(diary["_id"])} for diary in diaries]
@@ -126,7 +130,7 @@ class Diary:
             if not update_data:
                 return {"error": "업데이트할 데이터가 없습니다."}, 400
 
-            update_data["updated_at"] = datetime.now(timezone.utc)
+            update_data["updated_at"] = datetime.now(KST) 
 
             result = mongo.db.diaries.update_one(
                 {"_id": diary_id}, {"$set": update_data}

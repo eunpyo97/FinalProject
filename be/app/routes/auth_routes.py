@@ -208,6 +208,7 @@ def login():
         "access_token": "<JWT_ACCESS_TOKEN>",
         "refresh_token": "<JWT_REFRESH_TOKEN>"
     }
+    :return: 로그인 성공 시 액세스 및 리프레시 토큰 반환
     """
     try:
         data = request.get_json()

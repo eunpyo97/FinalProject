@@ -1,8 +1,12 @@
-from datetime import datetime, timezone
+from datetime import datetime
+import pytz  # KST 정의를 위해 추가
 from app.database import mongo
 import uuid
 import logging
 from bson import ObjectId
+
+# 한국 표준시(KST) 정의
+KST = pytz.timezone("Asia/Seoul")
 
 
 def save_emotion_data(user_id, chatroom_id, emotion, confidence):
@@ -20,6 +24,8 @@ def save_emotion_data(user_id, chatroom_id, emotion, confidence):
     emotion_id = str(uuid.uuid4())
 
     try:
+        kst_now = datetime.now(KST)
+
         result = mongo.db.emotions.insert_one(
             {
                 "user_id": user_id,
@@ -27,7 +33,7 @@ def save_emotion_data(user_id, chatroom_id, emotion, confidence):
                 "emotion_id": emotion_id,
                 "emotion": emotion,
                 "confidence": confidence,
-                "timestamp": datetime.now(timezone.utc),
+                "timestamp": kst_now.isoformat(),
             }
         )
         return {
@@ -116,52 +122,6 @@ def delete_emotion_results(chatroom_id):
         raise RuntimeError(f"감정 결과 삭제 오류: {e}")
 
 
-def auto_end_emotions():
-    """
-    미종료된 감정 분석 데이터를 자동 종료
-    """
-    try:
-        now = datetime.now(timezone.utc)
-        result = mongo.db.emotions.update_many(
-            {"timestamp": {"$lt": now}},  # 현재 시간 이전의 데이터
-            {"$set": {"confidence": None}},  # 신뢰도를 None으로 설정
-        )
-        return result.modified_count  # 업데이트된 문서 수 반환
-    except Exception as e:
-        raise RuntimeError(f"자동 종료 오류: {e}")
-
-
-def get_model_status(model):
-    """
-    감정 분석 모델의 상태 확인
-    """
-    try:
-        # 모델이 정상적으로 로드되었는지 확인
-        model.summary()  # 모델 요약 출력
-        return "정상"
-    except Exception as e:
-        return f"오류 발생: {str(e)}"
-
-
-def get_user_emotion_history(user_id):
-    """
-    사용자의 감정 분석 기록을 조회
-    :param user_id: 사용자 ID
-    """
-    try:
-        emotions = mongo.db.emotions.find({"user_id": user_id})
-        return [
-            {
-                "emotion": emotion["emotion"],
-                "confidence": emotion["confidence"],
-                "timestamp": emotion["timestamp"],
-            }
-            for emotion in emotions
-        ]
-    except Exception as e:
-        raise RuntimeError(f"사용자 감정 기록 조회 오류: {e}")
-
-
 def get_most_common_emotion(emotion_data):
     """
     가장 많이 감지된 감정을 찾아 반환하는 함수
@@ -182,32 +142,46 @@ def get_emotion_statistics(user_id, start_date, end_date):
     :param end_date: 종료 날짜 (ISO 형식, 예: '2023-02-28')
     """
     try:
+        start_date_kst = datetime.fromisoformat(start_date).astimezone(KST)
+        end_date_kst = datetime.fromisoformat(end_date).astimezone(KST)
+        end_date_kst = end_date_kst.replace(
+            hour=23, minute=59, second=59, microsecond=999999
+        )
+
+        print(f"[DEBUG] API 요청 받은 start_date: {start_date_kst}")
+        print(f"[DEBUG] API 요청 받은 end_date: {end_date_kst}")
+
+        # 문자열로 변환
+        start_date_str = start_date_kst.isoformat()
+        end_date_str = end_date_kst.isoformat()
+
         query = {
             "user_id": user_id,
             "timestamp": {
-                "$gte": datetime.fromisoformat(start_date),
-                "$lte": datetime.fromisoformat(end_date),
+                "$gte": start_date_str, 
+                "$lte": end_date_str,
             },
         }
-        emotions = mongo.db.emotions.find(query)
 
-        # 감정별 빈도수 계산
+        emotions = list(mongo.db.emotions.find(query))
+
+        print(f"[DEBUG] 조회된 감정 데이터 개수: {len(emotions)}")
+        for emotion in emotions:
+            print(f"[DEBUG] 감정 데이터: {emotion}")
+
         emotion_counts = {"happy": 0, "sadness": 0, "angry": 0, "panic": 0}
-        trend_data = []  # 감정 변화 저장 (날짜별 감정 변화)
+        trend_data = []
 
         for emotion in emotions:
             emotion_counts[emotion["emotion"]] += 1
             trend_data.append(
                 {
-                    "date": emotion["timestamp"].strftime(
-                        "%Y-%m-%d"
-                    ),  # datetime → 문자열 변환 후 날짜만 추출
+                    "date": emotion["timestamp"].split("T")[0],  
                     "emotion": emotion["emotion"],
                     "confidence": emotion["confidence"],
                 }
             )
 
-        # 감정 빈도수를 퍼센트(%)로 변환
         total = sum(emotion_counts.values())
         if total > 0:
             summary = {
