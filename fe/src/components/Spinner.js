@@ -7,12 +7,12 @@ const spin = keyframes`
 `;
 
 const Loader = styled.div`
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top: 3px solid #fff; 
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid #3498db;
   border-radius: 50%;
-  width: 3em;  
-  height: 1.5em; 
-  animation: ${spin} 1s linear infinite;
+  width: 2.5em;
+  height: 2.5em;
+  animation: ${spin} 0.8s linear infinite;
 `;
 
 const Spinner = () => {

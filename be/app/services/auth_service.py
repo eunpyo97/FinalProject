@@ -96,7 +96,6 @@ def register_user(email, password, confirm_password):
         db.session.add(new_user_time)
         db.session.commit()
 
-        # MongoDB에도 user_id 추가
         mongo.db.user_sessions.insert_one({
             "user_id": user_id,  
         })
@@ -108,8 +107,8 @@ def register_user(email, password, confirm_password):
 
         return {"message": "회원가입이 완료되었습니다."}
     except Exception as e:
-        db.session.rollback()  # MySQL 트랜잭션 롤백
-        mongo.db.user_sessions.delete_one({"user_id": user_id})  # MongoDB 롤백
+        db.session.rollback() 
+        mongo.db.user_sessions.delete_one({"user_id": user_id})  
         raise ValueError(f"회원가입 중 오류 발생: {str(e)}")
 
 def send_welcome_email(email):
@@ -146,16 +145,13 @@ def send_verification_code_service(email):
     if not validate_email(email):
         raise ValueError("유효하지 않은 이메일 형식입니다.")
     
-    # 이미 가입된 이메일인지 다시 확인 (추가 방어 코드)
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
         raise ValueError("이미 가입된 이메일입니다.")
 
-    # 6자리 랜덤 숫자 코드 생성
     verification_code = str(random.randint(100000, 999999))
     print(f"[DEBUG] 생성된 인증 코드: {verification_code}")  
 
-    # 이메일 전송
     msg = Message("이메일 인증 코드", sender=MAIL_USERNAME, recipients=[email])
     msg.body = f"인증 코드: {verification_code}\n\n이 코드는 5분 동안 유효합니다."
 
@@ -165,10 +161,9 @@ def send_verification_code_service(email):
         print(f"[ERROR] 이메일 전송 실패: {str(e)}")  
         raise ValueError(f"이메일 전송 실패: {str(e)}")  
 
-    # 딕셔너리 형태로 반환
     return {
         "message": "이메일이 전송되었습니다.",
-        "verificationCode": verification_code  # 프론트로 반환
+        "verificationCode": verification_code  
     }
 
 
@@ -232,12 +227,10 @@ def verify_email_request_service(email):
     이메일 인증 요청 처리
     """
     try:
-        # 이메일이 DB에 존재하는지 확인
         user = User.query.filter_by(email=email).first()
         if user:
             raise ValueError("이미 등록된 이메일입니다.")  
         
-        # 인증 코드 생성 및 전송
         send_verification_code_service(email)  
 
         return {"message": "이메일이 전송되었습니다. 인증 후 다시 확인해주세요."}
@@ -293,7 +286,6 @@ def logout_service(access_token):
     :return: 로그아웃 성공 메시지
     """
     try:
-        # 토큰 검증
         user_id = verify_token(access_token) 
         print(f"[DEBUG] 로그아웃 요청: user_id = {user_id}")
 
@@ -307,8 +299,11 @@ def logout_service(access_token):
     r.setex(f"access_token_{user_id}", timedelta(seconds=1), "invalid")
     r.setex(f"refresh_token_{user_id}", timedelta(seconds=1), "invalid")
 
-    # Redis에서 세션 상태 삭제 또는 초기화
-    r.delete(f"user:{user_id}:session")  # 세션 상태 삭제
+    # Redis에서 세션 상태 삭제
+    r.delete(f"user:{user_id}:session")  
+
+    # Redis에서 세션 삭제 대신 만료 시간만 줄이기
+    # r.setex(f"user:{user_id}:session", timedelta(minutes=1), "inactive")
 
     # MongoDB에서 해당 사용자의 로그인 세션 삭제
     mongo.db.user_sessions.delete_one({"user_id": user_id})
@@ -342,7 +337,7 @@ def authenticate_user(email, password):
     is_password_correct = user.check_password(password)
     print(f"[DEBUG] 비밀번호 검증 결과: {is_password_correct}")
 
-    if not is_password_correct: 
+    if not is_password_correct:
         print(f"[DEBUG] 저장된 비밀번호 해시: {user.password_hash}")
         print(f"[DEBUG] 입력된 비밀번호: {password}")
         raise ValueError("이메일 또는 비밀번호가 올바르지 않습니다.")
@@ -352,9 +347,8 @@ def authenticate_user(email, password):
     
     print("[DEBUG] 비밀번호 검증 성공!")
 
-    # JWT 토큰 생성
-    access_token = create_access_token(identity=user.user_id)  
-    refresh_token = create_refresh_token(identity=user.user_id)
+    access_token = create_access_token(identity=user.user_id, expires_delta=timedelta(minutes=30))  
+    refresh_token = create_refresh_token(identity=user.user_id, expires_delta=timedelta(days=7))
 
     # MongoDB에서 기존 로그인 세션 종료
     print("[DEBUG] MongoDB에 저장된 user_id:", user.user_id)
@@ -372,11 +366,7 @@ def authenticate_user(email, password):
         print(f"[ERROR] 로그인 로그 저장 실패: {str(e)}")
 
     # Redis에 토큰 저장
-    r.setex(f"access_token_{user.user_id}", timedelta(minutes=15), access_token)
-    r.setex(f"refresh_token_{user.user_id}", timedelta(days=7), refresh_token)
-
-    # Redis에 토큰 저장
-    r.setex(f"access_token_{user.user_id}", timedelta(minutes=15), access_token)
+    r.setex(f"access_token_{user.user_id}", timedelta(minutes=30), access_token)
     r.setex(f"refresh_token_{user.user_id}", timedelta(days=7), refresh_token)
 
     # Redis에서 세션 상태를 'active'로 설정
@@ -400,13 +390,10 @@ def generate_tokens(user_id: str, access_token_expiry: int = 15, refresh_token_e
     :return: 액세스 토큰 및 리프레시 토큰 (tuple)
     """
     try:
-        # 액세스 토큰 생성
         access_token = generate_token(user_id, expiration_minutes=access_token_expiry)
         
-        # 리프레시 토큰 생성
         refresh_token = generate_token(user_id, expiration_minutes=refresh_token_expiry)
 
-        # Redis에 액세스 토큰과 리프레시 토큰 저장
         r.setex(f"access_token_{user_id}", timedelta(minutes=access_token_expiry), access_token)
         r.setex(f"refresh_token_{user_id}", timedelta(minutes=refresh_token_expiry), refresh_token)
 
@@ -441,7 +428,6 @@ def verify_token(token):
     :return: user_id 문자열
     """
     try:
-        # 토큰 디코딩
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         print("[DEBUG] 검증된 토큰 페이로드:", payload)
         
@@ -453,6 +439,10 @@ def verify_token(token):
         # Redis에서 해당 사용자의 세션 상태 확인 (로그아웃된 사용자인지 확인)
         session_status = r.get(f"user:{user_id}:session")
         print(f"[DEBUG] Redis에서 세션 상태 확인: {session_status}")
+
+        # Redis 세션이 만료되었더라도, 토큰이 유효하면 로그인 상태 유지
+        if session_status is None:
+            return user_id
 
         if session_status is None or session_status != b'active':  # 세션 상태가 'active'인지 비교
             raise ValueError("로그아웃된 사용자입니다. 다시 로그인해주세요.")

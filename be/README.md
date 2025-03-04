@@ -26,7 +26,7 @@ set FLASK_APP=app
 flask run
 ```
 
-## 도커 파일 실행
+## 도커 실행 : redis 미설치 시
 1. .env 확인 : 아래 내용이 들어있어야 함
 ```
 REDIS_HOST=redis  
@@ -54,7 +54,7 @@ docker exec -it redis_server redis-cli ping
 docker-compose down
 ```
 
-## redis 다운로드 필요(도커 미실행시)
+## 도커 미실행시 : redis 다운로드 필요
 1. 최신 파일 다운로드
 ```
 https://github.com/microsoftarchive/redis/releases
@@ -74,30 +74,38 @@ ping
 ```
 6. redis-server.exe 실행(mysql 워크벤치처럼 켜놓키만 하면 됩니다.)
 
+## 구글 앱 비밀번호 생성 후 .env에 채워넣기  
+.
 
-## .env 내용
+## 아래 링크에서 데이터 다운로드
+- be/data/faiss_v2 폴더 생성 후 파일 두 개 넣기  
+[파일 다운로드](https://drive.google.com/drive/folders/1CdRVD3lnviZjhRYWSXLjNFq_QQfhc_79?usp=sharing)
+
+
+## .env 내용(오른쪽에  # 내용 참고하여 입력)
 ```
 # SQLAlchemy (MySQL DB)
 DB_HOST=localhost
-DB_USER=
-DB_PASSWORD=
-DB_NAME=
+DB_USER=root
+DB_PASSWORD=            # mysql db 비밀번호 입력
+DB_NAME=robotpet
 
 # MongoDB 연결 URI
-# MONGO_URI=mongodb://localhost:27017/robotpet
-SECRET_KEY=
+MONGO_URI=mongodb://localhost:27017/robotpet
+
+SECRET_KEY=             # 아무거나 시크릿키로 쓸만한 내용 입력 
 
 # 이메일 설정
 MAIL_SERVER=smtp.gmail.com
 MAIL_PORT=587
 MAIL_USE_TLS=True
 MAIL_USE_SSL=False
-MAIL_USERNAME=          # 이메일 계정
+MAIL_USERNAME=          # 이메일 계정(본인 이메일)
 MAIL_PASSWORD=          # 구글에서 생성한 앱 비밀번호
-MAIL_DEFAULT_SENDER=    # 발신자 이메일
+MAIL_DEFAULT_SENDER=    # 발신자 이메일(본인 이메일)
 
 # 기본 URL 설정
-BASE_URL=http://127.0.0.1:3000
+BASE_URL=localhost:3000
 
 # swagger 관련 설정
 SWAGGER_UI_URL=/api/docs
@@ -105,7 +113,7 @@ SWAGGER_API_DOCS=/static/swagger.json
 
 # redis 설정
 REDIS_HOST=localhost
-# REDIS_HOST=redis  # Docker 컨테이너 내부에서는 'redis'로 접근
+# REDIS_HOST=redis      # Docker 컨테이너 내부에서는 'redis'로 접근
 REDIS_PORT=6379
 REDIS_DB=0
 
@@ -114,7 +122,12 @@ REDIS_MAXMEMORY=512mb
 REDIS_MAXMEMORY_POLICY=allkeys-lru 
 
 # openai api키
-OPENAI_API_KEY=
+OPENAI_API_KEY=         # openai에서 발급한 키
+
+# 모델 및 벡터 db 경로
+MODEL_PATH=./data/model/TEST_1efficientnet_b2_model.keras
+VECTOR_DB_PATH=./data/faiss_v2
+
 
 FLASK_ENV=development
 ```
@@ -129,27 +142,31 @@ FLASK_ENV=development
 │   │   ├── 📄 __init__.py
 │   │   ├── 📄 chat.py
 │   │   ├── 📄 emotion.py
+│   │   ├── 📄 diary.py
 │   │   └── 📄 users.py
 │   ├── 📂 routes/                    # 각 API 엔드포인트에 대한 라우팅 설정
 │   │   ├── 📄 __init__.py
 │   │   ├── 📄 auth_routes.py         # 인증 관련 API 
 │   │   ├── 📄 chat_routes.py         
+│   │   ├── 📄 diary_routes.py
 │   │   ├── 📄 emotion_routes.py
-│   │   ├── 📄 home_routes.py         # 홈 화면
-│   │   └── 📄 user_routes.py         # 사용자 관련 API
+│   │   ├── 📄 home_routes.py        
+│   │   └── 📄 user_routes.py         
 │   ├── 📂 services/                  # 비즈니스 로직 처리   
 │   │   ├── 📄 auth_service.py        # 인증 서비스 로직
 │   │   ├── 📄 chat_service.py        
+│   │   ├── 📄 diary_service.py
+│   │   ├── 📄 diary_summary_service.py
 │   │   ├── 📄 emotion_service.py
 │   │   ├── 📄 llm_service.py
 │   │   ├── 📄 rag_service.py
-│   │   └── 📄 user_service.py        # user 서비스 로직
+│   │   └── 📄 user_service.py        
 │   ├── 📂 static/                
 │   │   └── 📄 swagger.json           # Swagger 설정
 │   ├── 📂 utils/                  
 │   │   ├── 📄 auth.py
 │   │   └── 📄 error_handler.py       # 공통 에러 핸들러
-│   ├── 📄 __init__.py                # Flask 애플리케이션 팩토리 함수 (create_app)
+│   └── 📄 __init__.py                # Flask 애플리케이션 팩토리 함수
 ├── 📂 config/                     
 │   └── 📄 settings.py                # Flask 환경 변수 설정 (ActiveConfig)
 ├── 📂 data/  
@@ -162,6 +179,6 @@ FLASK_ENV=development
 ├── 📄 .gitignore                     
 ├── 📄 app.py                         # Flask 실행 스크립트
 ├── 📄 docker-compose.yml                          
-├── 📄 requirements.txt               
-└── 📄 README.md                      
+├── 📄 README.md                      
+└── 📄 requirements.txt               
 ```

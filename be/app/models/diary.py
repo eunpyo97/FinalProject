@@ -1,21 +1,38 @@
+from bson.errors import InvalidId
 from datetime import datetime
+import pytz
 from flask_pymongo import PyMongo
 from flask import Flask
 from bson.objectid import ObjectId
 
 mongo = PyMongo()
 
+KST = pytz.timezone("Asia/Seoul")
+
 class Diary:
-    def __init__(self, user_id, content, date, emotion, title=None, tag=None, created_at=None, updated_at=None, summary=None):
+    def __init__(
+        self,
+        user_id,
+        chatroom_id,
+        content,
+        date,
+        emotion,
+        title=None,
+        tag=None,
+        created_at=None,
+        updated_at=None,
+        summary=None,
+    ):
         self.user_id = user_id
+        self.chatroom_id = chatroom_id
         self.content = content
         self.date = date
         self.emotion = emotion
         self.title = title
         self.tag = tag
-        self.created_at = created_at or datetime.utcnow()
+        self.created_at = created_at or datetime.now(KST)  
         self.updated_at = updated_at
-        self.summary = summary  
+        self.summary = summary
 
     def to_dict(self):
         """
@@ -23,12 +40,13 @@ class Diary:
         """
         return {
             "user_id": self.user_id,
+            "chatroom_id": self.chatroom_id,
             "content": self.content,
             "date": self.date,
             "emotion": self.emotion,
             "title": self.title,
             "tag": self.tag,
-            "created_at": self.created_at,
+            "created_at": self.created_at,  
             "updated_at": self.updated_at,
             "summary": self.summary,
         }
@@ -40,12 +58,13 @@ class Diary:
         """
         return Diary(
             user_id=data["user_id"],
+            chatroom_id=data.get("chatroom_id", None),
             content=data["content"],
             date=data["date"],
             emotion=data["emotion"],
             title=data.get("title", None),
             tag=data.get("tag", None),
-            created_at=data.get("created_at", datetime.utcnow()),
+            created_at=data.get("created_at", datetime.now(KST)),  
             updated_at=data.get("updated_at", None),
             summary=data.get("summary", None),
         )
@@ -57,19 +76,22 @@ class Diary:
         :param diary_data: Diary 객체 또는 딕셔너리 형태의 데이터
         """
         if isinstance(diary_data, Diary):
-            diary_data = diary_data.to_dict()  # Diary 객체라면 딕셔너리로 변환
-        result = mongo.db.diaries.insert_one(diary_data)  # mongo.db 사용
-        return str(result.inserted_id)  # 저장된 문서의 ID를 문자열로 반환
+            diary_data = diary_data.to_dict()
+        diary_data["created_at"] = datetime.now(KST) 
+
+        result = mongo.db.diaries.insert_one(diary_data)
+        return str(result.inserted_id)
 
     @staticmethod
     def get_by_user_and_date(user_id, date):
         """
         특정 사용자의 날짜별 일기 목록 조회
         :param user_id: 사용자 ID
-        :param date: 날짜 (ISO 형식, 예: '2023-02-01')
+        :param date: 날짜 (예: '2023-02-01', 문자열)
+        :return: 해당 날짜의 일기 목록 (리스트)
         """
-        diaries = mongo.db.diaries.find({"user_id": user_id, "date": date})  # mongo.db 사용
-        return [Diary.from_dict(diary) for diary in diaries]  
+        diaries = mongo.db.diaries.find({"user_id": user_id, "date": date})
+        return [{**diary, "_id": str(diary["_id"])} for diary in diaries]
 
     @staticmethod
     def get_by_id(diary_id):
@@ -77,9 +99,10 @@ class Diary:
         일기 ID로 상세 조회
         :param diary_id: 일기 ID (문자열)
         """
-        diary = mongo.db.diaries.find_one({"_id": ObjectId(diary_id)})  # mongo.db 사용
+        diary = mongo.db.diaries.find_one({"_id": ObjectId(diary_id)})
         if diary:
-            return Diary.from_dict(diary)  # Diary 객체로 변환
+            diary["_id"] = str(diary["_id"])
+            return diary
         return None
 
     @staticmethod
@@ -88,8 +111,8 @@ class Diary:
         일기 ID로 삭제
         :param diary_id: 일기 ID (문자열)
         """
-        result = mongo.db.diaries.delete_one({"_id": ObjectId(diary_id)})  # mongo.db 사용
-        return result.deleted_count > 0  
+        result = mongo.db.diaries.delete_one({"_id": ObjectId(diary_id)})
+        return result.deleted_count > 0
 
     @staticmethod
     def update_by_id(diary_id, update_data):
@@ -98,5 +121,26 @@ class Diary:
         :param diary_id: 일기 ID (문자열)
         :param update_data: 수정할 데이터 (딕셔너리)
         """
-        result = mongo.db.diaries.update_one({"_id": ObjectId(diary_id)}, {"$set": update_data})  # mongo.db 사용
-        return result.modified_count > 0  
+        try:
+            if not diary_id:
+                return {"error": "diary_id가 필요합니다."}, 400
+
+            diary_id = ObjectId(diary_id)
+
+            if not update_data:
+                return {"error": "업데이트할 데이터가 없습니다."}, 400
+
+            update_data["updated_at"] = datetime.now(KST) 
+
+            result = mongo.db.diaries.update_one(
+                {"_id": diary_id}, {"$set": update_data}
+            )
+
+            if result.modified_count > 0:
+                return {"message": "일기 수정 성공!"}, 200
+            return {"message": "변경된 내용이 없습니다."}, 400
+
+        except InvalidId:
+            return {"error": "올바르지 않은 diary_id입니다."}, 400
+        except Exception as e:
+            return {"error": f"일기 수정 중 오류 발생: {str(e)}"}, 500

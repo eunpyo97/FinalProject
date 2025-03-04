@@ -1380,92 +1380,85 @@
                     "diary"
                 ],
                 "summary": "일기 내용 저장",
-                "description": "요약된 대화 내용을 사용자 ID와 감정 정보와 함께 일기 형식으로 저장",
+                "description": "일기 내용 저장하기",
                 "parameters": [
                     {
-                        "name": "user_id",
+                        "name": "body",
                         "in": "body",
-                        "description": "사용자의 고유 ID",
                         "required": true,
                         "schema": {
-                            "type": "string",
-                            "example": "user_123"
-                        }
-                    },
-                    {
-                        "name": "content",
-                        "in": "body",
-                        "description": "대화 내용 요약 또는 일기 내용",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "example": "오늘은 친구와 좋은 대화를 나누었어요."
-                        }
-                    },
-                    {
-                        "name": "date",
-                        "in": "body",
-                        "description": "일기 작성 날짜 (기본값: 오늘 날짜)",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "example": "2025-02-23"
-                        }
-                    },
-                    {
-                        "name": "emotion",
-                        "in": "body",
-                        "description": "일기 작성 시 감정 상태",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "example": "happy"
-                        }
-                    },
-                    {
-                        "name": "summary",
-                        "in": "body",
-                        "description": "대화를 일기형식으로 요약",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "example": "오늘 대화는 긍정적인 분위기였어요."
+                            "type": "object",
+                            "properties": {
+                                "user_id": {
+                                    "type": "string",
+                                    "example": "user_123"
+                                },
+                                "content": {
+                                    "type": "string",
+                                    "example": "오늘은 친구와 좋은 대화를 나누었어요."
+                                },
+                                "emotion": {
+                                    "type": "string",
+                                    "example": "happy"
+                                },
+                                "date": {
+                                    "type": "string",
+                                    "example": "2025-02-25"
+                                }
+                            },
+                            "required": [
+                                "user_id",
+                                "content",
+                                "emotion"
+                            ]
                         }
                     }
                 ],
                 "responses": {
                     "201": {
                         "description": "일기 저장 성공",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "message": {
-                                    "type": "string",
-                                    "example": "일기 저장 성공!"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "일기 저장 성공!"
+                                        }
+                                    }
                                 }
                             }
                         }
                     },
                     "400": {
-                        "description": "잘못된 요청 (필수 값이 없거나 유효하지 않음)",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "message": {
-                                    "type": "string",
-                                    "example": "사용자 ID와 일기 내용은 필수입니다!"
+                        "description": "잘못된 요청 (필수 값 누락)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "필수 값이 누락되었습니다."
+                                        }
+                                    }
                                 }
                             }
                         }
                     },
                     "500": {
                         "description": "서버 내부 오류",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "error": {
-                                    "type": "string",
-                                    "example": "서버 내부 오류"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "서버 내부 오류"
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1473,78 +1466,81 @@
                 }
             }
         },
-        "/diary/calendar/emoji": {
+        "/diary/summary/save": {
             "post": {
                 "tags": [
                     "diary"
                 ],
-                "summary": "대화에서 감지된 감정에 따라 달력에 이모지 표시",
-                "description": "사용자가 선택한 날짜에 가장 많이 감지된 감정을 기반으로 달력에 이모지를 표시",
+                "summary": "대화 내용 요약 및 저장",
+                "description": "대화 내용 요약을 생성하고, 생성된 요약을 일기 형식으로 저장",
                 "parameters": [
                     {
-                        "name": "user_id",
+                        "name": "body",
                         "in": "body",
-                        "description": "사용자의 고유 ID",
                         "required": true,
                         "schema": {
-                            "type": "string",
-                            "example": "user_123"
-                        }
-                    },
-                    {
-                        "name": "date",
-                        "in": "body",
-                        "description": "이모지를 표시할 날짜",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "example": "2025-02-23"
-                        }
-                    },
-                    {
-                        "name": "emotion_emoji",
-                        "in": "body",
-                        "description": "가장 많이 감지된 감정을 표현하는 이모지",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "example": "😊"
+                            "type": "object",
+                            "properties": {
+                                "chatroom_id": {
+                                    "type": "string",
+                                    "example": "chatroom_123"
+                                }
+                            },
+                            "required": [
+                                "chatroom_id"
+                            ]
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "이모지 표시 성공",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "message": {
-                                    "type": "string",
-                                    "example": "이모지 표시 성공!"
+                        "description": "대화 내용 요약 및 저장 성공",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "요약 및 일기 저장 성공!"
+                                        },
+                                        "summary": {
+                                            "type": "string",
+                                            "example": "오늘 대화는 모두 긍정적이었어요."
+                                        }
+                                    }
                                 }
                             }
                         }
                     },
                     "400": {
-                        "description": "잘못된 요청 (필수 값이 없거나 유효하지 않음)",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "message": {
-                                    "type": "string",
-                                    "example": "사용자 ID, 날짜, 이모지는 필수입니다!"
+                        "description": "잘못된 요청 (chatroom_id가 제공되지 않음)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "chatroom_id가 필요합니다."
+                                        }
+                                    }
                                 }
                             }
                         }
                     },
                     "500": {
                         "description": "서버 내부 오류",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "error": {
-                                    "type": "string",
-                                    "example": "서버 내부 오류"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "서버 내부 오류"
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1789,68 +1785,111 @@
                         "required": true,
                         "schema": {
                             "type": "string",
-                            "example": "diary_123"
+                            "example": "65db123456abcdef7890abcd"
                         }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "content": {
-                                        "type": "string",
-                                        "description": "새로운 일기 내용",
-                                        "example": "오늘은 날씨가 정말 좋았다."
-                                    },
-                                    "emotion": {
-                                        "type": "string",
-                                        "description": "새로운 감정 상태",
-                                        "example": "행복"
-                                    }
-                                },
-                                "required": [
-                                    "content"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "일기 수정 성공",
+                    },
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "message": {
+                                "content": {
                                     "type": "string",
-                                    "example": "일기 수정 성공!"
+                                    "description": "수정할 일기 내용",
+                                    "example": "오늘 하루는 매우 즐거웠다!"
+                                },
+                                "emotion": {
+                                    "type": "string",
+                                    "description": "수정할 감정 상태",
+                                    "example": "happy"
+                                }
+                            },
+                            "required": [
+                                "content",
+                                "emotion"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "일기 수정 성공",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "일기 수정 성공!"
+                                        },
+                                        "diary_id": {
+                                            "type": "string",
+                                            "example": "65db123456abcdef7890abcd"
+                                        },
+                                        "updated_content": {
+                                            "type": "string",
+                                            "example": "오늘 하루는 매우 즐거웠다!"
+                                        },
+                                        "updated_emotion": {
+                                            "type": "string",
+                                            "example": "happy"
+                                        },
+                                        "updated_at": {
+                                            "type": "string",
+                                            "example": "2025-03-01T12:30:45.123456+09:00"
+                                        }
+                                    }
                                 }
                             }
                         }
                     },
                     "400": {
-                        "description": "일기 수정 실패",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "message": {
-                                    "type": "string",
-                                    "example": "일기 내용은 필수입니다!"
+                        "description": "잘못된 요청 (필수 값 누락)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "필수 값이 누락되었습니다."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "권한 없음",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "권한이 없습니다."
+                                        }
+                                    }
                                 }
                             }
                         }
                     },
                     "500": {
                         "description": "서버 내부 오류",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "error": {
-                                    "type": "string",
-                                    "example": "서버 내부 오류"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "서버 내부 오류"
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -2215,7 +2254,7 @@
                     "emotion"
                 ],
                 "summary": "특정 채팅방의 감정 데이터 삭제",
-                "description": "특정 채팅방의 감정 분석 결과를 삭제합니다.",
+                "description": "특정 채팅방의 감정 데이터를 삭제합니다.",
                 "parameters": [
                     {
                         "name": "chatroom_id",
@@ -2264,192 +2303,13 @@
                 }
             }
         },
-        "/emotion/save-end-emotion": {
-            "post": {
-                "tags": [
-                    "emotion"
-                ],
-                "summary": "대화 종료 시 대표 감정 저장",
-                "description": "대화 종료 시, 채팅방에서 가장 많이 감지된 감정을 저장합니다.",
-                "parameters": [],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "chatroom_id": {
-                                        "type": "string",
-                                        "example": "room456",
-                                        "description": "채팅방 ID"
-                                    },
-                                    "user_id": {
-                                        "type": "string",
-                                        "example": "user123",
-                                        "description": "사용자 ID"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "대표 감정 저장 성공",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "대화 종료 시 감정 데이터 저장 성공",
-                                            "description": "응답 메시지"
-                                        },
-                                        "emotion": {
-                                            "type": "object",
-                                            "properties": {
-                                                "emotion": {
-                                                    "type": "string",
-                                                    "example": "happy",
-                                                    "description": "대표 감정"
-                                                },
-                                                "confidence": {
-                                                    "type": "number",
-                                                    "format": "float",
-                                                    "example": 0.85,
-                                                    "description": "신뢰도"
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "필수 필드 누락",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "필수 필드가 누락되었습니다.",
-                                            "description": "오류 메시지"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "서버 오류",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "오류 발생: 내부 서버 문제",
-                                            "description": "오류 메시지"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/emotion/history": {
-            "get": {
-                "tags": [
-                    "emotion"
-                ],
-                "summary": "사용자의 감정 분석 기록 조회",
-                "description": "JWT 토큰을 통해 인증된 사용자의 감정 분석 기록을 조회합니다.",
-                "parameters": [],
-                "responses": {
-                    "200": {
-                        "description": "감정 기록 조회 성공",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "object",
-                                        "properties": {
-                                            "emotion": {
-                                                "type": "string",
-                                                "example": "happy",
-                                                "description": "감정 레이블"
-                                            },
-                                            "confidence": {
-                                                "type": "number",
-                                                "format": "float",
-                                                "example": 0.85,
-                                                "description": "감정 신뢰도 (0~1)"
-                                            },
-                                            "timestamp": {
-                                                "type": "string",
-                                                "format": "date-time",
-                                                "example": "2023-10-01T12:34:56Z",
-                                                "description": "데이터 저장 시간"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "인증 실패 (토큰 누락 또는 유효하지 않음)",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "인증이 필요합니다.",
-                                            "description": "오류 메시지"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "서버 오류",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "오류 발생: 내부 서버 문제",
-                                            "description": "오류 메시지"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/emotion/stats": {
             "get": {
                 "tags": [
                     "emotion"
                 ],
                 "summary": "사용자의 감정 통계 조회",
-                "description": "JWT 토큰을 통해 인증된 사용자의 감정 통계를 조회합니다 (주간, 월간 등).",
+                "description": "JWT 토큰을 통해 인증된 사용자의 감정 통계를 조회합니다 (주간, 월간 등). 감정 통계는 요약(summary)과 날짜별 감정 변화(trend)로 나뉩니다.",
                 "parameters": [
                     {
                         "name": "start_date",
@@ -2457,8 +2317,8 @@
                         "required": true,
                         "type": "string",
                         "format": "date",
-                        "example": "2023-02-01",
-                        "description": "통계 시작 날짜"
+                        "example": "2025-02-01",
+                        "description": "통계 시작 날짜 (YYYY-MM-DD 형식)"
                     },
                     {
                         "name": "end_date",
@@ -2466,8 +2326,8 @@
                         "required": true,
                         "type": "string",
                         "format": "date",
-                        "example": "2023-02-28",
-                        "description": "통계 종료 날짜"
+                        "example": "2025-02-28",
+                        "description": "통계 종료 날짜 (YYYY-MM-DD 형식)"
                     }
                 ],
                 "responses": {
@@ -2486,25 +2346,56 @@
                                         "stats": {
                                             "type": "object",
                                             "properties": {
-                                                "happy": {
-                                                    "type": "integer",
-                                                    "example": 10,
-                                                    "description": "행복 감정 빈도수"
+                                                "summary": {
+                                                    "type": "object",
+                                                    "description": "감정 요약 (백분율, Pie Chart용)",
+                                                    "properties": {
+                                                        "happy": {
+                                                            "type": "number",
+                                                            "example": 50.0,
+                                                            "description": "행복 감정 비율 (%)"
+                                                        },
+                                                        "sadness": {
+                                                            "type": "number",
+                                                            "example": 30.0,
+                                                            "description": "슬픔 감정 비율 (%)"
+                                                        },
+                                                        "angry": {
+                                                            "type": "number",
+                                                            "example": 15.0,
+                                                            "description": "분노 감정 비율 (%)"
+                                                        },
+                                                        "panic": {
+                                                            "type": "number",
+                                                            "example": 5.0,
+                                                            "description": "공포 감정 비율 (%)"
+                                                        }
+                                                    }
                                                 },
-                                                "sadness": {
-                                                    "type": "integer",
-                                                    "example": 5,
-                                                    "description": "슬픔 감정 빈도수"
-                                                },
-                                                "angry": {
-                                                    "type": "integer",
-                                                    "example": 3,
-                                                    "description": "분노 감정 빈도수"
-                                                },
-                                                "panic": {
-                                                    "type": "integer",
-                                                    "example": 2,
-                                                    "description": "공포 감정 빈도수"
+                                                "trend": {
+                                                    "type": "array",
+                                                    "description": "날짜별 감정 변화 (Line Chart용)",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "date": {
+                                                                "type": "string",
+                                                                "format": "date",
+                                                                "example": "2025-02-01",
+                                                                "description": "감정이 기록된 날짜"
+                                                            },
+                                                            "emotion": {
+                                                                "type": "string",
+                                                                "example": "happy",
+                                                                "description": "해당 날짜의 대표 감정"
+                                                            },
+                                                            "confidence": {
+                                                                "type": "number",
+                                                                "example": 0.85,
+                                                                "description": "감정 분석 신뢰도 (0~1)"
+                                                            }
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -2541,103 +2432,6 @@
                                             "type": "string",
                                             "example": "인증이 필요합니다.",
                                             "description": "오류 메시지"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "서버 오류",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "오류 발생: 내부 서버 문제",
-                                            "description": "오류 메시지"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/emotion/status": {
-            "get": {
-                "tags": [
-                    "emotion"
-                ],
-                "summary": "감정 분석 모델 상태 확인",
-                "description": "감정 분석 모델의 상태를 확인합니다.",
-                "parameters": [],
-                "responses": {
-                    "200": {
-                        "description": "모델 상태 확인 성공",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "정상",
-                                            "description": "모델 상태"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "서버 오류",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "오류 발생: 내부 서버 문제",
-                                            "description": "오류 메시지"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/emotion/auto-end": {
-            "post": {
-                "tags": [
-                    "emotion"
-                ],
-                "summary": "미처리된 감정 데이터 자동 종료",
-                "description": "날짜가 바뀌면 미종료된 감정 분석 데이터를 자동으로 종료합니다.",
-                "parameters": [],
-                "responses": {
-                    "200": {
-                        "description": "자동 종료 성공",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "자동 종료된 감정 분석 데이터",
-                                            "description": "응답 메시지"
-                                        },
-                                        "ended_emotions": {
-                                            "type": "integer",
-                                            "example": 5,
-                                            "description": "자동 종료된 데이터 수"
                                         }
                                     }
                                 }

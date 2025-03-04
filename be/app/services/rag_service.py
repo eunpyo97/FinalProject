@@ -6,28 +6,32 @@ FAISS 벡터 DB 로드 및 검색 기능 제공
 검색된 문서에서 output 추출
 """
 
-
-
 import os
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 from dotenv import load_dotenv
+from config.settings import ActiveConfig
 
 load_dotenv()
 
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-# vector_db_path = os.path.join(BASE_DIR, "data", "faiss")
-vector_db_path = os.path.join(BASE_DIR, "data", "faiss_v2")
+VECTOR_DB_PATH = ActiveConfig.VECTOR_DB_PATH
 
 try:
-    vectorstore = FAISS.load_local(vector_db_path, OpenAIEmbeddings(), allow_dangerous_deserialization=True)
+    # FAISS 벡터 DB 로드
+    vectorstore = FAISS.load_local(
+        VECTOR_DB_PATH, OpenAIEmbeddings(), allow_dangerous_deserialization=True
+    )
     retriever = vectorstore.as_retriever()
 
     if retriever is None:
-        raise RuntimeError("retriever가 None입니다. 벡터 DB 로드에 실패했을 가능성이 있습니다.")
+        raise RuntimeError(
+            "retriever가 None입니다. 벡터 DB 로드에 실패했을 가능성이 있습니다."
+        )
     print("FAISS 벡터 DB 로드 성공")
 except Exception as e:
-    raise RuntimeError
+    print(f"모델 로드 중 오류 발생: {e}")
+    raise
+
 
 def retrieve_relevant_documents(user_message):
     """
@@ -41,12 +45,13 @@ def retrieve_relevant_documents(user_message):
     """
     if retriever is None:
         raise RuntimeError("retriever가 초기화되지 않았습니다. 벡터 DB를 확인하세요.")
-    
+
     try:
         search_results = retriever.get_relevant_documents(user_message)
         return search_results
     except Exception as e:
         raise RuntimeError(f"RAG 검색 중 오류 발생: {str(e)}")
+
 
 def preview_rag_search(user_message):
     """
@@ -61,7 +66,7 @@ def preview_rag_search(user_message):
     try:
         # 유사도 검색 수행
         search_results = retriever.get_relevant_documents(user_message)
-        
+
         results = []
         for doc in search_results:
             # metadata에 "output" 필드가 있으면 사용
@@ -70,19 +75,22 @@ def preview_rag_search(user_message):
             elif hasattr(doc, "page_content") and doc.page_content:
                 # "output:" 접두어 제거
                 if doc.page_content.lower().startswith("output:"):
-                    content = doc.page_content[len("output:"):].strip()
+                    content = doc.page_content[len("output:") :].strip()
                 else:
-                    continue 
+                    continue
             else:
-                continue 
-            
+                continue
+
             if content:
                 results.append(content)
 
         if not results:
-            return {"message": "관련된 상담 사례를 찾을 수 없습니다.", "retrieved_documents": []}
-        
+            return {
+                "message": "관련된 상담 사례를 찾을 수 없습니다.",
+                "retrieved_documents": [],
+            }
+
         return {"retrieved_documents": results}
-    
+
     except Exception as e:
         return {"error": str(e)}

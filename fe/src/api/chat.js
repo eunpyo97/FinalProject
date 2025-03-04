@@ -25,8 +25,15 @@ export const getChatHistory = async (chatroomId, limit = 10) => {
     if (response.data && Array.isArray(response.data.chats)) {
       const conversationEnd = response.data.conversationEnd || false;
 
+      const formattedChats = response.data.chats.map((chat) => {
+        return {
+          ...chat,
+          timestamp: new Date(chat.timestamp).toLocaleString(), 
+        };
+      });
+
       return {
-        chats: response.data.chats,
+        chats: formattedChats,
         conversationEnd: conversationEnd,
       };
     } else {
@@ -45,7 +52,7 @@ export const sendMessageToBot = async (chatroomId, userMessage) => {
     await axios.post("/chat/message", {
       chatroom_id: chatroomId,
       user_message: userMessage,
-      bot_response: " ", 
+      bot_response: " ",
       emotion_id: null,
       confidence: null,
       conversation_end: false,
@@ -76,46 +83,56 @@ export const sendMessageToBot = async (chatroomId, userMessage) => {
   }
 };
 
-// 감정 기반 챗봇 대화
+/* 
+* 감정 기반 챗봇 대화
+* 각 채팅방(chatroomId) 별로 감정 상태를 추적하는 객체
+*/
+let chatroomEmotionStates = {};
+
 export const sendEmotionChatMessage = async (chatroomId, userMessage) => {
   try {
-    // 요청 데이터
+    // 사용자 메시지와 감정 분석을 함께 전송
     const requestData = {
       chatroom_id: chatroomId,
-      user_message: userMessage || "", 
+      user_message: userMessage || "",
     };
 
     console.log("전송 데이터:", requestData);
 
+    // 감정 분석 요청
     const response = await axios.post("/chat/emotion-chat", requestData);
 
     console.log("서버 응답:", response.data);
 
-    // 응답 데이터 파싱
-    const { bot_response, emotion, confidence, emotion_id, message } = response.data;
+    if (!response.data || !response.data.emotion) {
+      console.error("감정 분석 실패 또는 감정 데이터 없음.");
+    }
 
-    console.log("응답 메시지:", message);
-    console.log("감정 분석 결과:", emotion);
-    console.log("감정 신뢰도:", confidence);
-    console.log("감정 ID:", emotion_id);
+    const {
+      bot_response,
+      emotion = "neutral",
+      confidence = 0.0,
+      timestamp, 
+    } = response.data;
 
-    // 챗봇 응답 처리 (bot_response가 없다면 기본 메시지 사용)
-    const botResponse = bot_response || "챗봇 응답을 받을 수 없습니다.";
+    const localTimestamp = new Date(timestamp).toLocaleString();
 
+    // 감정 상태 변경 시, 로컬 상태 업데이트
+    if (chatroomEmotionStates[chatroomId]?.emotion !== emotion) {
+      chatroomEmotionStates[chatroomId] = { emotion, confidence };
+      console.log(`감정 상태 변경: ${emotion}`);
+    }
+
+    // 챗봇 응답 반환
     return {
-      botResponse, 
-      emotionData: {
-        emotion,
-        confidence, 
-        emotion_id, 
-      },
+      botResponse: bot_response,
+      emotion,
+      confidence,
+      timestamp: localTimestamp, 
     };
   } catch (error) {
-    console.error(
-      "메시지 전송 실패:",
-      error.response ? error.response.data : error.message
-    );
-    throw error; 
+    console.error("감정 분석 메시지 전송 실패:", error);
+    throw error;
   }
 };
 
@@ -160,12 +177,41 @@ export const getUserChatHistory = async () => {
     const response = await axios.get(
       `/chat/history/${localStorage.getItem("user_id")}`
     );
-    return response.data.chatrooms;
+
+    console.log("[DEBUG] 서버 응답 데이터:", response.data.chatrooms); // 디버깅용 로그 추가
+
+    // 날짜 데이터를 변환하여 반환
+    const formattedChatrooms = response.data.chatrooms.map((chatroom) => {
+      console.log("[DEBUG] 변환 전 timestamp:", chatroom.timestamp); // 변환 전 로그
+
+      let formattedTimestamp = "날짜 없음";
+
+      if (chatroom.timestamp) {
+        if (typeof chatroom.timestamp === "string" && chatroom.timestamp.length === 14) {
+          // "20250301072736" -> YYYY-MM-DD HH:mm:ss 변환
+          formattedTimestamp = `${chatroom.timestamp.slice(0, 4)}-${chatroom.timestamp.slice(4, 6)}-${chatroom.timestamp.slice(6, 8)} ${chatroom.timestamp.slice(8, 10)}:${chatroom.timestamp.slice(10, 12)}:${chatroom.timestamp.slice(12, 14)}`;
+        } else {
+          // ISO 형식일 경우 Date 객체 변환
+          formattedTimestamp = new Date(chatroom.timestamp).toLocaleString();
+        }
+      }
+
+      console.log("[DEBUG] 변환 후 timestamp:", formattedTimestamp); // 변환 후 로그
+
+      return {
+        ...chatroom,
+        timestamp: formattedTimestamp,
+      };
+    });
+
+    return formattedChatrooms;
   } catch (error) {
     console.error("사용자 채팅방 조회 실패:", error);
     throw error;
   }
 };
+
+
 
 // 특정 채팅방 삭제
 export const deleteChatroom = async (chatroomId) => {

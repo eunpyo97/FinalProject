@@ -7,7 +7,7 @@ user_bp = Blueprint("user", __name__)
 @user_bp.route("/<user_id>/password", methods=["PATCH"])
 def change_password_route(user_id):
     """
-    비밀번호 변경 API
+    비밀번호 변경
 
     요청 형식:
     {
@@ -20,7 +20,7 @@ def change_password_route(user_id):
     """
     try:
         if not user_id:
-            raise ValueError("유효한 사용자 ID가 필요합니다.")  
+            raise ValueError("유효한 사용자 ID가 필요합니다.")
 
         data = request.get_json()
         if not data or "old_password" not in data or "new_password" not in data:
@@ -31,7 +31,7 @@ def change_password_route(user_id):
 
     except ValueError as e:
         current_app.logger.error(f"Password change error: {str(e)}")
-        raise  
+        raise
 
     except Exception as e:
         current_app.logger.error(f"Unexpected error in change_password: {str(e)}")
@@ -41,7 +41,7 @@ def change_password_route(user_id):
 @user_bp.route("/<user_id>", methods=["DELETE"])
 def delete_account_route(user_id):
     """
-    회원 탈퇴 API
+    회원 탈퇴
 
     요청 형식:
     {
@@ -53,27 +53,26 @@ def delete_account_route(user_id):
     """
     try:
         if not user_id:
-            raise ValueError("유효한 사용자 ID가 필요합니다.")  
+            raise ValueError("유효한 사용자 ID가 필요합니다.")
 
         data = request.get_json()
         if not data or "access_token" not in data:
             raise ValueError("액세스 토큰이 필요합니다.")
 
-    # delete_account() 내부에서 JWT 검증하므로 여기서는 user_id를 그대로 전달
         response = delete_account(user_id, data["access_token"])
         return jsonify(response), 200
 
     except ValueError as e:
         current_app.logger.error(f"Account deletion error: {str(e)}")
-        raise  
+        raise
 
     except PermissionError as e:
         current_app.logger.error(f"Permission error in delete_account: {str(e)}")
-        raise  
+        raise
 
     except Exception as e:
         current_app.logger.error(f"Unexpected error in delete_account: {str(e)}")
-        raise  
+        raise
 
 
 @user_bp.route("/profile", methods=["GET"])
@@ -81,7 +80,8 @@ def get_profile():
     """
     프로필 조회 API (미구현)
     """
-    raise NotImplementedError("프로필 조회 기능이 아직 구현되지 않았습니다.") 
+    raise NotImplementedError("프로필 조회 기능이 아직 구현되지 않았습니다.")
+
 
 @user_bp.route("/profile", methods=["PATCH"])
 def update_profile():
@@ -89,6 +89,7 @@ def update_profile():
     프로필 수정 API (미구현)
     """
     raise NotImplementedError("프로필 수정 기능이 아직 구현되지 않았습니다.")
+
 
 @user_bp.route("/<user_id>", methods=["GET"])
 def get_user_info(user_id):
