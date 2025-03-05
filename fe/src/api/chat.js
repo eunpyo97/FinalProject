@@ -178,11 +178,11 @@ export const getUserChatHistory = async () => {
       `/chat/history/${localStorage.getItem("user_id")}`
     );
 
-    console.log("[DEBUG] 서버 응답 데이터:", response.data.chatrooms); // 디버깅용 로그 추가
+    console.log("[DEBUG] 서버 응답 데이터:", response.data.chatrooms); 
 
     // 날짜 데이터를 변환하여 반환
     const formattedChatrooms = response.data.chatrooms.map((chatroom) => {
-      console.log("[DEBUG] 변환 전 timestamp:", chatroom.timestamp); // 변환 전 로그
+      console.log("[DEBUG] 변환 전 timestamp:", chatroom.timestamp); 
 
       let formattedTimestamp = "날짜 없음";
 
@@ -196,7 +196,7 @@ export const getUserChatHistory = async () => {
         }
       }
 
-      console.log("[DEBUG] 변환 후 timestamp:", formattedTimestamp); // 변환 후 로그
+      console.log("[DEBUG] 변환 후 timestamp:", formattedTimestamp); 
 
       return {
         ...chatroom,

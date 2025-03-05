@@ -228,7 +228,6 @@ def get_user_chat_history(user_id: str) -> list:
             if isinstance(timestamp, str) and len(timestamp) == 14:
                 timestamp = datetime.strptime(timestamp, "%Y%m%d%H%M%S")
             
-            # 디버깅 로그 추가
             print(f"[DEBUG] 채팅방 ID: {chatroom['chatroom_id']}, timestamp: {timestamp}")
 
             result.append({

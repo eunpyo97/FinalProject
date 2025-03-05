@@ -153,7 +153,7 @@ const CalendarPage = () => {
   const isCacheValid = (cachedData, maxAge = 60 * 1000) => {
     if (!cachedData) return false;
     const { timestamp } = JSON.parse(cachedData);
-    return Date.now() - timestamp < maxAge; // 캐시 유효 시간 (예: 1분)
+    return Date.now() - timestamp < maxAge; // 캐시 유효 시간
   };
 
   useEffect(() => {
