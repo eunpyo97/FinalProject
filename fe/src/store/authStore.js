@@ -5,7 +5,7 @@ import { logout as logoutApi } from "../api/auth";
 const useAuthStore = create((set) => ({
   isAuthenticated: !!localStorage.getItem("access_token"),
   accessToken: localStorage.getItem("access_token") || null,
-  userId: localStorage.getItem("user_id") || null, // 사용자 ID 추가
+  userId: localStorage.getItem("user_id") || null, 
 
   // 로그인 시 userId 및 토큰 저장
   setLogin: (userId, token, rememberMe) => {

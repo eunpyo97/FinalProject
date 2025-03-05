@@ -1,11 +1,13 @@
 # Ai-RobotPet
 
 
+### 백엔드 설명
+[백엔드 폴더구조 README](./be/README.md)
 
+### 프론트엔드 설명
+[프론트엔드 폴더구조 README](./fe/README.md)
 
-
-
-### 폴더구조
+### 전체 폴더구조
 ```
 📦 AI-ROBOTPET
 ├── 📂 data
@@ -20,9 +22,9 @@
 ├── 📂 models
 │   ├──📂 llm
 │   │   ├── 📄 01_jsonl_to_csv.ipynb  # JSONL 데이터를 CSV로 변환
-│   │   ├── 📄 02_save_vector_db.ipynb  # 벡터DB로 변환하여 저장
-│   │   ├── 📄 03_load_vector_db.ipynb  # 저장된 벡터DB 로드
-│   │   └── 📄 04_rag_chatbot.ipynb  # RAG 챗봇 구현 코드
+│   │   ├── 📄 02_save_vector_db_v2.ipynb  # 벡터DB로 변환하여 저장
+│   │   ├── 📄 03_evaluate_vector_db.ipynb  # rag 성능 평가
+│   │   └── 📄 04_rag_chatbot_v2.ipynb  # RAG 챗봇 구현 코드
     └──📂 face
 │       ├── 📄 preprocess.py  # 데이터를 전처리
 │       ├── 📄 TEST_1efficientnet_b2_model.keras  # 감정분류 모델
