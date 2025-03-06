@@ -124,31 +124,3 @@ export const deleteEmotionData = async (emotionId) => {
     throw new Error("감정 데이터 삭제 실패");
   }
 };
-
-/**
- * 감정 분석 모델 상태 조회
- * @returns {Promise<Object>}
- */
-export const getModelStatus = async () => {
-  try {
-    const response = await api.get("/emotion/model-status");
-    return response.data;
-  } catch (error) {
-    console.error("모델 상태 조회 실패:", error);
-    throw new Error("모델 상태 조회 실패");
-  }
-};
-
-/**
- * 가장 일반적인 감정 조회
- * @returns {Promise<Object>}
- */
-export const getMostCommonEmotion = async () => {
-  try {
-    const response = await api.get("/emotion/most-common");
-    return response.data;
-  } catch (error) {
-    console.error("가장 일반적인 감정 조회 실패:", error);
-    throw new Error("가장 일반적인 감정 조회 실패");
-  }
-};
